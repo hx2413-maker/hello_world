@@ -15,7 +15,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000/books`. The list includes loading, empty, and database-error states. No sample rows are embedded in the page; displayed books come from Supabase.
+Open `http://localhost:3000/books`. Click any card to open its `/books/[id]` detail page, fetched from Supabase by ID. Both pages link back for navigation. The app includes loading, empty, database-error, and missing-book states. No sample rows are embedded in the pages; displayed books come from Supabase.
 
 ## Validate and deploy
 

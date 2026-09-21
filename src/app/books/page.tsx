@@ -16,6 +16,8 @@ export default async function BooksPage() {
           <Link href="/" className="text-sky-300 hover:underline">← Home</Link>
           <h1 className="mt-10 text-4xl font-bold">The shelves are temporarily unavailable.</h1>
           <p className="mt-5 text-slate-300">We couldn’t load the reading list. Please try again in a moment.</p>
+          {/* A full reload retries the failed query instead of reusing the current route. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/books" className="mt-8 inline-block rounded-full bg-sky-300 px-6 py-3 font-semibold text-slate-950">Try again</a>
         </section>
       </main>
@@ -44,7 +46,8 @@ export default async function BooksPage() {
           ) : (
             <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {books.map((book, index) => (
-                <li key={book.id} className="flex flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-7 transition-colors hover:border-sky-700">
+                <li key={book.id}>
+                  <Link href={`/books/${book.id}`} aria-label={`View ${book.title}`} className="group flex h-full flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-7 transition-colors hover:border-sky-500 hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">
                   <div className="mb-10 flex items-center justify-between gap-4">
                     <span className="rounded-full bg-sky-400/10 px-3 py-1 text-xs font-medium text-sky-300">{book.category}</span>
                     <span className="font-mono text-sm text-slate-500">{String(index + 1).padStart(2, "0")}</span>
@@ -52,6 +55,8 @@ export default async function BooksPage() {
                   <h3 className="text-2xl font-semibold tracking-tight">{book.title}</h3>
                   <p className="mt-2 text-sm text-sky-200">{book.author}</p>
                   <p className="mt-5 text-sm leading-7 text-slate-400">{book.description}</p>
+                  <span className="mt-auto pt-6 text-sm font-medium text-sky-300 group-hover:text-sky-100">View book →</span>
+                  </Link>
                 </li>
               ))}
             </ul>
