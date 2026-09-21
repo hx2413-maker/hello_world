@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-6 text-white">
@@ -13,6 +15,7 @@ export default function Home() {
           A tiny idea, shipped all the way from a local commit to the edge.
         </p>
         <div className="mx-auto mt-10 h-1 w-24 rounded-full bg-gradient-to-r from-sky-400 to-fuchsia-500" />
+        <Link href="/books" className="mt-10 inline-block rounded-full bg-sky-300 px-7 py-3 font-semibold text-slate-950 transition-colors hover:bg-sky-200">Explore the reading room →</Link>
       </section>
     </main>
   );
