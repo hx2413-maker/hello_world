@@ -12,7 +12,7 @@ An upvote or downvote inserts one `votes` row keyed to the caption and authentic
 
 - **A daily starting point:** a rotating UTC daily prompt draws on dorms, Butler, the 1 train, bookstores, and inexpensive weekend adventures. It reduces blank-page friction and gives students a reason to return. The 14 authored prompts cycle; the app does not claim they are live NYC news.
 - **A small, specific format:** one short caption and three voices keep creation quick and recognizable. Bookish city humor connects the new feature to the existing Reading Room instead of adding an unrelated generator.
-- **Community selection and sharing:** real vote totals and permanent links help good lines travel. There are no invented activity counts, seeded fake votes, or fabricated AI examples.
+- **Community selection and sharing:** real vote totals and permanent links help good lines travel. The setup script creates three real Gemini-generated examples from a separate starter account so early visitors have something to rate; they are explicitly labeled “City Margins starter.” There are no invented activity counts or seeded fake votes.
 - **Improvement on the assignment’s upload-to-caption pattern:** users can participate without supplying a personal photo, choose the voice, and see their saved creative direction. Private source prompts and clear public-output labeling reduce surprises; votes help readers discover the strongest results.
 
 PM feedback has not yet been supplied. During the feedback session, test whether Sam can generate and rate a caption without explanation, whether the daily prompt feels relevant, and whether voting feels useful. Record the PM’s actual observations and changes made; do not describe uncollected feedback as completed iteration.
@@ -22,6 +22,8 @@ PM feedback has not yet been supplied. During the feedback session, test whether
 Apply [`supabase/migrations/20261005_city_margins.sql`](supabase/migrations/20261005_city_margins.sql) to the **existing** Supabase project after the Assignment 3 migration. It preserves existing data and can be rerun.
 
 Then apply [`supabase/migrations/20261005_city_margins_budget.sql`](supabase/migrations/20261005_city_margins_budget.sql) to enforce a shared maximum of 100 attempts per UTC day before any provider call. Its private counter increments in the same transaction as the request and survives account deletion. This bounds request volume, not a guaranteed dollar amount; provider pricing and your account’s billing tier still apply.
+
+Finally apply [`supabase/migrations/20261005_city_margins_starters.sql`](supabase/migrations/20261005_city_margins_starters.sql), then [`supabase/migrations/20261005_city_margins_starter_publication.sql`](supabase/migrations/20261005_city_margins_starter_publication.sql). They add server-controlled starter labels and session-specific ownership to the feed without exposing author IDs. Starter labels are assigned in the same transaction that publishes a caption, using admin-controlled account metadata. To populate the three examples, run `node --env-file=.env.local scripts/seed-city-margins.mjs` once with the server variables below. The script creates a dedicated starter account without sending email, uses authenticated quota reservations and real Gemini calls, saves full prompts and outputs, and skips already-completed examples on reruns. Starter votes begin at zero.
 
 | Table | Read access | Mutation access |
 | --- | --- | --- |
@@ -41,7 +43,7 @@ Configure these **server-only** variables in `.env.local` and the existing Verce
 | Variable | Purpose |
 | --- | --- |
 | `GEMINI_API_KEY` | Key created in Google AI Studio; never expose with `NEXT_PUBLIC_` |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash-lite`; choose a compatible model available to your key |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-3.5-flash-lite`; choose a compatible model available to your key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Completes/fails generation requests only; the session-bound anon client still handles user reads, quota reservations, and voting |
 
 The app sends the full stored system/user prompts to Google’s [generateContent API](https://ai.google.dev/api/generate-content). Only complete, nonempty captions of at most 320 Unicode characters are accepted. Provider errors, rate limits, and timeouts show a retry message without publishing placeholder content. No new SDK or runtime dependency is required.

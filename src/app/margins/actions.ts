@@ -37,8 +37,11 @@ export async function generateCaption(_previousState: GenerationState, form: For
     let output: Awaited<ReturnType<typeof generateWithGemini>>;
     try {
       output = await generateWithGemini(prompt, config);
-    } catch {
+    } catch (error) {
       await writer.fail(requestId).catch(() => undefined);
+      if (error instanceof Error && error.message === "provider_unavailable") {
+        return { status: "error", message: "Caption generation is temporarily unavailable. Please try again later; you can still explore and vote on published captions. This attempt counts toward today’s limit." };
+      }
       return { status: "error", message: "The AI couldn’t finish this caption. Try a different scene or try again later. This attempt counts toward today’s limit." };
     }
 

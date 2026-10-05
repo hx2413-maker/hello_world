@@ -3,7 +3,7 @@ import { parseGeminiResponse, SYSTEM_PROMPT } from "@/lib/generation-contract";
 
 export function getGenerationConfig() {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   if (!apiKey || !/^[a-zA-Z0-9.-]+$/.test(model)) return null;
   return { apiKey, model };
 }
@@ -24,6 +24,11 @@ export async function generateWithGemini(prompt: string, config: { apiKey: strin
     },
   );
   // Never log provider response bodies: they can contain prompts or credentials.
-  if (!response.ok) throw new Error(response.status === 429 ? "provider_busy" : "provider_error");
+  if (!response.ok) {
+    const reason = [401, 402, 403, 404].includes(response.status)
+      ? "provider_unavailable"
+      : response.status === 429 ? "provider_busy" : "provider_error";
+    throw new Error(reason);
+  }
   return parseGeminiResponse(await response.json());
 }

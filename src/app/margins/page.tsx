@@ -80,7 +80,7 @@ export default async function MarginsPage({ searchParams }: { searchParams: Prom
                 <Link href="/margins?sort=top#caption-feed" aria-current={sort === "top" ? "page" : undefined} className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 ${sort === "top" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white"}`}>Top rated</Link>
               </nav>
             </div>
-            <p className="mb-6 text-xs leading-6 text-slate-400">{sort === "top" ? "The community’s favorites, ranked by upvotes minus downvotes." : "Freshly generated lines from the city. A good one deserves your vote."} {user ? "One vote per caption; tap again to undo." : "Sign in to help the best lines rise."}</p>
+            <p className="mb-6 text-xs leading-6 text-slate-400">Discover community captions and clearly labeled City Margins starters. {sort === "top" ? "Ranked by upvotes minus downvotes. " : null}{user ? "One vote per caption; tap again to undo." : "Sign in to help the best lines rise."}</p>
             {captions.length > 0 ? (
               <ul className="space-y-5">
                 {captions.map((caption) => <li key={caption.id}><CaptionCard caption={caption} signedIn={Boolean(user)} /></li>)}

@@ -10,6 +10,8 @@ export type Caption = {
   downvotes: number;
   score: number;
   viewer_vote: number | null;
+  is_owner: boolean;
+  is_starter: boolean;
 };
 
 export type GenerationRequest = {

@@ -33,8 +33,8 @@ select set_config('test.user_b', gen_random_uuid()::text, true);
 
 insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data)
 values
-  (current_setting('test.user_a')::uuid, 'authenticated', 'authenticated', current_setting('test.user_a') || '@example.invalid', '{}'::jsonb, '{}'::jsonb),
-  (current_setting('test.user_b')::uuid, 'authenticated', 'authenticated', current_setting('test.user_b') || '@example.invalid', '{}'::jsonb, '{}'::jsonb);
+  (current_setting('test.user_a')::uuid, 'authenticated', 'authenticated', current_setting('test.user_a') || '@example.invalid', '{"city_margins_starter": true}'::jsonb, '{}'::jsonb),
+  (current_setting('test.user_b')::uuid, 'authenticated', 'authenticated', current_setting('test.user_b') || '@example.invalid', '{}'::jsonb, '{"city_margins_starter": true}'::jsonb);
 
 select pg_temp.assert_true(not exists (
   select 1 from pg_catalog.pg_class c
@@ -88,6 +88,7 @@ select pg_temp.expect_sqlstate(
   $$select public.complete_generation(current_setting('test.failed')::uuid, 'late completion')$$,
   '55000', 'a failed request cannot later be published');
 reset role;
+select pg_temp.assert_true((select is_starter from public.captions where id = current_setting('test.caption_a')::uuid), 'starter attribution is already present when completion returns, without a later UPDATE');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.user_b'), true);
@@ -106,6 +107,7 @@ reset role;
 set local role service_role;
 select public.complete_generation(current_setting('test.caption_b')::uuid, 'A pocket-sized poem for a very large city.');
 reset role;
+select pg_temp.assert_true((select not is_starter from public.captions where id = current_setting('test.caption_b')::uuid), 'user-editable metadata cannot impersonate an admin-designated starter account');
 
 -- Public visitors can read outputs and scores but no private records or votes.
 set local role anon;
@@ -116,6 +118,9 @@ select pg_temp.assert_true((select body = 'The city called. It is also running l
 select pg_temp.assert_true(not exists (select 1 from public.captions where id in (current_setting('test.failed')::uuid, current_setting('test.pending')::uuid)), 'failed and pending generations are not public');
 select pg_temp.assert_true((select count(*) >= 0 from public.books), 'existing books remain public');
 select pg_temp.assert_true((select viewer_vote is null from public.get_caption_feed(p_caption_id => current_setting('test.caption_a')::uuid)), 'anonymous viewers have no vote');
+select pg_temp.assert_true((select is_starter and not is_owner from public.get_caption_feed(p_caption_id => current_setting('test.caption_a')::uuid)), 'anonymous viewers see starter attribution without ownership');
+select pg_temp.assert_true((select not is_starter and not is_owner from public.get_caption_feed(p_caption_id => current_setting('test.caption_b')::uuid)), 'ordinary captions default to community attribution');
+select pg_temp.assert_true((select not (to_jsonb(feed) ?| array['user_id', 'scene', 'prompt', 'system_prompt']) from public.get_caption_feed(p_caption_id => current_setting('test.caption_a')::uuid) feed), 'feed attribution does not expose author IDs or private prompts');
 select pg_temp.expect_sqlstate('select * from public.generation_requests', '42501', 'anonymous prompts are inaccessible');
 select pg_temp.expect_sqlstate('select * from public.profiles', '42501', 'anonymous profiles are inaccessible');
 select pg_temp.expect_sqlstate('select * from public.votes', '42501', 'anonymous voter records are inaccessible');
@@ -131,6 +136,10 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.user_a'), true);
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.user_a'), 'role', 'authenticated')::text, true);
+select pg_temp.assert_true((select is_owner from public.get_caption_feed(p_caption_id => current_setting('test.caption_a')::uuid)), 'an author can recognize their own caption');
+select pg_temp.expect_sqlstate(
+  $$update public.captions set is_starter = false where id = current_setting('test.caption_a')::uuid$$,
+  '42501', 'even the caption owner cannot change starter attribution');
 select public.cast_vote(current_setting('test.caption_a')::uuid, 1::smallint);
 select public.cast_vote(current_setting('test.caption_a')::uuid, 1::smallint);
 select pg_temp.assert_true((select count(*) = 1 from public.votes where caption_id = current_setting('test.caption_a')::uuid), 'repeated vote creates only one row');
@@ -159,6 +168,8 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', current_setting('test.user_b'), true);
 select set_config('request.jwt.claims', json_build_object('sub', current_setting('test.user_b'), 'role', 'authenticated')::text, true);
+select pg_temp.assert_true((select not is_owner from public.get_caption_feed(p_caption_id => current_setting('test.caption_a')::uuid)), 'another viewer does not inherit the author ownership flag');
+select pg_temp.assert_true((select is_owner and not is_starter from public.get_caption_feed(p_caption_id => current_setting('test.caption_b')::uuid)), 'community authors receive their own ownership flag');
 select pg_temp.assert_true(not exists (select 1 from public.votes), 'user B cannot inspect user A vote row');
 with changed as (
   update public.votes set value = 1 where user_id = current_setting('test.user_a')::uuid returning user_id
