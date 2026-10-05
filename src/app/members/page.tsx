@@ -26,7 +26,8 @@ export default async function MembersPage() {
             Member reading room
           </p>
           <h1 className="mt-7 break-words text-4xl font-bold tracking-tight sm:text-6xl">Welcome, <span className="text-sky-300">{profile.first_name?.trim()}.</span></h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">Your seat is saved. Settle in, discover a story, and make a little room for a new idea.</p>
+          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">Your seat is saved. Discover a story, or turn a city moment into one of your own.</p>
+          <Link href="/margins#caption-studio" className="mt-7 inline-block rounded-full bg-sky-300 px-6 py-3 font-semibold text-slate-950 hover:bg-sky-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Create a caption in City Margins →</Link>
         </header>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-[1.5fr_1fr]">

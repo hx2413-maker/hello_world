@@ -1,6 +1,62 @@
 # Hello World — The Reading Room
 
-Assignment 3 extends the same Next.js app and Supabase reading list from Assignments 1 and 2. It adds Google sign-in, automatic profile creation, required name completion, editable profiles with photo uploads, and a protected member reading room.
+Assignment 4 adds **City Margins** to the existing Reading Room: signed-in members generate short AI captions about campus and NYC life, publish them, and vote on the community’s captions. The app retains the Assignment 3 Google sign-in, required profile setup, private photos, books, and protected member room.
+
+## City Margins
+
+Visit `/margins` to browse the public feed. Sign in to describe a scene (10–280 characters), choose witty/poetic/deadpan, and **Generate & publish**. A server action verifies the session, reserves a database-backed quota slot, calls Gemini, and atomically saves the caption. Each result has a permanent `/margins/<uuid>` page. Its creator can expand the exact saved prompts; other visitors cannot read those records. The UI explicitly explains that the caption is public and may contain details from the scene.
+
+An upvote or downvote inserts one `votes` row keyed to the caption and authenticated user. Repeating the same vote does not duplicate it; changing it updates that row, and selecting it again removes it. Votes and scores persist across refreshes. Newest and Top rated provide chronological and score-based discovery with pagination. Guests can read and share captions but cannot invoke generation or vote mutations. Sign-in returns users to the caption they were viewing, including after required profile completion.
+
+### Product choices for Sam
+
+- **A daily starting point:** a rotating UTC daily prompt draws on dorms, Butler, the 1 train, bookstores, and inexpensive weekend adventures. It reduces blank-page friction and gives students a reason to return. The 14 authored prompts cycle; the app does not claim they are live NYC news.
+- **A small, specific format:** one short caption and three voices keep creation quick and recognizable. Bookish city humor connects the new feature to the existing Reading Room instead of adding an unrelated generator.
+- **Community selection and sharing:** real vote totals and permanent links help good lines travel. There are no invented activity counts, seeded fake votes, or fabricated AI examples.
+- **Improvement on the assignment’s upload-to-caption pattern:** users can participate without supplying a personal photo, choose the voice, and see their saved creative direction. Private source prompts and clear public-output labeling reduce surprises; votes help readers discover the strongest results.
+
+PM feedback has not yet been supplied. During the feedback session, test whether Sam can generate and rate a caption without explanation, whether the daily prompt feels relevant, and whether voting feels useful. Record the PM’s actual observations and changes made; do not describe uncollected feedback as completed iteration.
+
+### Assignment 4 database setup
+
+Apply [`supabase/migrations/20261005_city_margins.sql`](supabase/migrations/20261005_city_margins.sql) to the **existing** Supabase project after the Assignment 3 migration. It preserves existing data and can be rerun.
+
+Then apply [`supabase/migrations/20261005_city_margins_budget.sql`](supabase/migrations/20261005_city_margins_budget.sql) to enforce a shared maximum of 100 attempts per UTC day before any provider call. Its private counter increments in the same transaction as the request and survives account deletion. This bounds request volume, not a guaranteed dollar amount; provider pricing and your account’s billing tier still apply.
+
+| Table | Read access | Mutation access |
+| --- | --- | --- |
+| `books` | Everyone | No app-client writes |
+| `profiles` | Owner only | Owner updates name/photo columns only |
+| `generation_requests` | Owner only | Authenticated `reserve_generation`; server-only completion/failure |
+| `captions` | Everyone | Server-only `complete_generation` |
+| `votes` | Owner only | Authenticated owner inserts/changes/removes their vote |
+| `daily_generation_budget` | No app-client reads | Private reservation trigger only |
+
+The migration enables RLS on all application tables in `public`, replaces permissive policies on the five app tables, and restricts table/column grants. Supabase-managed schemas are not rewritten; existing private photo policies remain in effect. Public `get_caption_feed` deliberately returns aggregate counts and only the current viewer’s vote, never voter IDs, profile data, or private source prompts. Its definer function has an empty search path and explicit execution grants.
+
+`reserve_generation` derives ownership from `auth.uid()` and serializes reservations per account. A unique slot constraint adds a hard maximum of **five attempts per UTC day**, including failures. The application cannot delete reservations to reset the limit. A separate server credential can only be reached through server-only code; it completes the reserved result after a real provider response. Users cannot insert fabricated captions or mark pending requests completed. Completion retries are idempotent and never call the AI again. Pending/failed requests never appear in the public feed.
+
+Configure these **server-only** variables in `.env.local` and the existing Vercel project’s Production and Preview environments:
+
+| Variable | Purpose |
+| --- | --- |
+| `GEMINI_API_KEY` | Key created in Google AI Studio; never expose with `NEXT_PUBLIC_` |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash-lite`; choose a compatible model available to your key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Completes/fails generation requests only; the session-bound anon client still handles user reads, quota reservations, and voting |
+
+The app sends the full stored system/user prompts to Google’s [generateContent API](https://ai.google.dev/api/generate-content). Only complete, nonempty captions of at most 320 Unicode characters are accepted. Provider errors, rate limits, and timeouts show a retry message without publishing placeholder content. No new SDK or runtime dependency is required.
+
+### Assignment 4 validation
+
+```sh
+npm test
+npm run lint
+npm run build
+```
+
+Run [`supabase/tests/city_margins_rls.sql`](supabase/tests/city_margins_rls.sql) and [`supabase/tests/city_margins_budget.sql`](supabase/tests/city_margins_budget.sql) as postgres in a disposable/local Supabase database after both migrations. They create temporary accounts inside transactions, assert anonymous and cross-account restrictions, vote insert/change/remove behavior, score correctness, publication integrity, and both daily quota limits, then roll back all fixtures. These are integration tests, not production seed scripts.
+
+Before submitting the unique deployment URL, verify logged-out browsing, Google sign-in return navigation, one real generation and saved prompts, persistent vote/change/remove behavior, and incognito access. PM feedback and submission to the course portal require the owner’s feedback/session context.
 
 ## Existing projects
 
@@ -20,6 +76,7 @@ Keep using these projects. The deployment behind the production alias changes wh
 | --- | --- |
 | `/` | Public homepage |
 | `/books` and `/books/[id]` | Public list and book details fetched from Supabase |
+| `/margins` and `/margins/[id]` | Public AI caption feed and permalinks; sign in to generate/rate; saved prompts visible only to creator |
 | `/login` | Google sign-in; existing sessions continue to profile setup or the member room |
 | `/auth/callback` | Exchanges the OAuth code for a session, then checks profile completeness |
 | `/profile` | Requires sign-in; edits first name, last name, and an optional photo |
@@ -32,7 +89,7 @@ On the first Google sign-in, a database trigger creates the profile with both na
 
 ## Local environment
 
-Use **Node.js 22 or newer**. The installed `@supabase/supabase-js` version requires Node `>=22.0.0`.
+Use **Node.js 22.18 or newer** (Vercel uses Node 24). This supports the built-in TypeScript stripping used by the dependency-free unit tests, as well as the installed Supabase client.
 
 ```sh
 cp .env.example .env.local
@@ -48,7 +105,7 @@ Fill in `.env.local` before starting the app:
 | `SUPABASE_ANON_KEY` | This project's anon key from Supabase settings |
 | `SITE_URL` | Optional trusted origin; `http://localhost:3000` locally or the production/custom origin on Vercel |
 
-These are server environment variables; this app does not require `NEXT_PUBLIC_` copies. Keep `.env.local` out of Git and use the anon key, never a service-role key. Google client credentials belong in Supabase's Google provider configuration, not in application source code.
+These are server environment variables; this app does not require `NEXT_PUBLIC_` copies. Keep `.env.local` out of Git. The normal Supabase client uses the anon key with the user’s session; the service-role key is isolated in the generation writer described above. Google OAuth client credentials belong in Supabase's Google provider configuration, not in application source code.
 
 Open [localhost:3000](http://localhost:3000). On Vercel, the app also recognizes the current deployment, branch, and production origins from Vercel's system environment variables so the OAuth callback stays on the host where sign-in started.
 
@@ -97,7 +154,7 @@ npm run lint
 npm run build
 ```
 
-Use Node 22 or newer in the existing Vercel project's build settings. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` in Production and Preview, and set `SITE_URL` to the production alias if needed. Commit and push to the existing GitHub repository to create a deployment. In Vercel project settings, turn off Deployment Protection and wait for the deployment to become Ready.
+Use Node 24 in the existing Vercel project's build settings. Set the Supabase and Gemini variables described above in Production and Preview, and set `SITE_URL` to the production alias if needed. Commit and push to the existing GitHub repository to create a deployment. In Vercel project settings, turn off Deployment Protection and wait for the deployment to become Ready.
 
 Complete this checklist against the new deployment's unique URL before submitting it:
 

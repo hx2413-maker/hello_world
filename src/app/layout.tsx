@@ -3,8 +3,8 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Hello, World!",
-  description: "The Reading Room: books, a personal profile, and a members-only space.",
+  title: "The Reading Room | City Margins",
+  description: "A little shelf of big ideas, and AI captions for life between chapters. Create a NYC caption and vote for your favorites.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

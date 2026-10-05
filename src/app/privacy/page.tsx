@@ -12,7 +12,7 @@ export default function PrivacyPage() {
       <article className="mx-auto max-w-3xl">
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-sky-300">The Reading Room</p>
         <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">Privacy notice</h1>
-        <p className="mt-6 text-lg leading-8 text-slate-400">The Reading Room is an educational app with a public book collection and a member area. This notice describes the information used for sign-in and profiles.</p>
+        <p className="mt-6 text-lg leading-8 text-slate-400">The Reading Room is an educational app with a public book collection, AI captions in City Margins, and a member area. This notice describes how the app uses your information.</p>
 
         <div className="mt-12 space-y-9 border-t border-slate-800 pt-9 text-slate-300">
           <section aria-labelledby="sign-in-privacy-heading">
@@ -24,6 +24,13 @@ export default function PrivacyPage() {
             <h2 id="profile-privacy-heading" className="text-xl font-semibold text-white">Your profile and photo</h2>
             <p className="mt-3 leading-7">The first and last names you enter are stored in the app’s Supabase database and used to personalize your member area. You can change them in Profile. Uploading a profile photo is optional; the file is stored in Supabase Storage, and the database stores its file path.</p>
             <p className="mt-3 leading-7">The app restricts profile and photo access to the signed-in owner. Photos are displayed through temporary links that expire after one hour. Anyone with a temporary photo link can view that photo until the link expires, so avoid sharing it if you want to keep the photo private.</p>
+          </section>
+
+          <section aria-labelledby="captions-privacy-heading">
+            <h2 id="captions-privacy-heading" className="text-xl font-semibold text-white">AI captions and votes</h2>
+            <p className="mt-3 leading-7">When you generate a caption, your scene and the app’s writing instructions are sent to Google’s Gemini API. The app stores the scene, complete prompts, model, usage information, time, and generation status in Supabase, linked to your account. These records are readable only by you through the app and by its administrators. Failed attempts are also retained to enforce the daily limit.</p>
+            <p className="mt-3 leading-7">A completed caption and its tone are published automatically and can be read or shared by anyone. The AI may include details from your scene in that public caption, so leave out personal or confidential information. Your profile name and email are not attached to the public caption. Votes are linked to your account; other visitors see totals, not your individual vote or identity.</p>
+            <p className="mt-3 leading-7">Google processes prompts under its <a href="https://ai.google.dev/gemini-api/terms" className="text-sky-300 underline underline-offset-4">Gemini API terms</a>. Depending on the service tier, Google may use submitted content to improve its products. You can change or remove a vote at any time. Contact the app owner to request deletion of captions or your account data.</p>
           </section>
 
           <section aria-labelledby="services-privacy-heading">

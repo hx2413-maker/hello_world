@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { signInWithGoogle } from "@/app/auth/actions";
 import { getCurrentUser, getProfile, isProfileComplete } from "@/lib/auth";
+import { AUTH_NEXT_COOKIE, getPostSignInPath, getSafeAuthNext } from "@/lib/auth-next";
 
 export const metadata: Metadata = {
   title: "Sign in | The Reading Room",
@@ -17,17 +19,19 @@ const signInErrors = new Map([
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string | string[] }>;
+  searchParams: Promise<{ error?: string | string[]; next?: string | string[] }>;
 }) {
+  const query = await searchParams;
+  const next = getSafeAuthNext(query.next) ?? getSafeAuthNext((await cookies()).get(AUTH_NEXT_COOKIE)?.value);
   const user = await getCurrentUser();
 
   if (user) {
     // The profile route provides a retry state if the database is unavailable.
     const profile = await getProfile(user.id).catch(() => null);
-    redirect(isProfileComplete(profile) ? "/members" : "/profile");
+    redirect(getPostSignInPath(next, isProfileComplete(profile)));
   }
 
-  const { error } = await searchParams;
+  const { error } = query;
   const errorCode = Array.isArray(error) ? error[0] : error;
   const errorMessage = errorCode
     ? signInErrors.get(errorCode) ?? "We couldn’t finish signing you in. Please try again."
@@ -40,7 +44,7 @@ export default async function LoginPage({
         <section className="max-w-xl">
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-sky-300">The Reading Room</p>
           <h1 className="mt-6 text-5xl font-bold tracking-tight sm:text-6xl">A place for your<br /><span className="text-sky-300">next chapter.</span></h1>
-          <p className="mt-6 max-w-md text-lg leading-8 text-slate-400">Make yourself at home. Sign in to set up your profile and step into our member reading room.</p>
+          <p className="mt-6 max-w-md text-lg leading-8 text-slate-400">Make yourself at home. Sign in to create AI captions in City Margins, vote for your favorites, and step into our member reading room.</p>
           <Link href="/books" className="mt-8 inline-block rounded-md text-sm font-medium text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Browse the books first →</Link>
         </section>
         <section aria-labelledby="sign-in-heading" className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 sm:p-10">
@@ -55,6 +59,7 @@ export default async function LoginPage({
             <p role="alert" className="mt-6 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm leading-6 text-amber-100">{errorMessage}</p>
           )}
           <form action={signInWithGoogle} className="mt-8">
+            {next ? <input type="hidden" name="next" value={next} /> : null}
             <button type="submit" className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-white px-6 py-3.5 font-semibold text-slate-950 transition-colors hover:bg-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">
               <span aria-hidden="true" className="text-lg font-bold">G</span>
               Continue with Google

@@ -14,9 +14,10 @@ type ProfileFormProps = {
   lastName: string | null;
   photoUrl: string | null;
   email: string | undefined;
+  next: string | null;
 };
 
-export function ProfileForm({ firstName, lastName, photoUrl, email }: ProfileFormProps) {
+export function ProfileForm({ firstName, lastName, photoUrl, email, next }: ProfileFormProps) {
   const [state, formAction, pending] = useActionState(saveProfile, initialState);
   const [editedFirstName, setEditedFirstName] = useState(firstName ?? "");
   const [editedLastName, setEditedLastName] = useState(lastName ?? "");
@@ -26,6 +27,7 @@ export function ProfileForm({ firstName, lastName, photoUrl, email }: ProfileFor
 
   return (
     <form action={formAction} onSubmit={(event) => { if (photoClientError) event.preventDefault(); }} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:p-9" aria-busy={pending}>
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <div className="flex flex-wrap items-center gap-5 border-b border-slate-800 pb-8">
         {photoUrl ? (
           <Image src={photoUrl} alt="Your profile photo" width={88} height={88} unoptimized className="h-22 w-22 rounded-full border border-slate-700 object-cover" />
@@ -79,7 +81,7 @@ export function ProfileForm({ firstName, lastName, photoUrl, email }: ProfileFor
           ) : null}
         </div>
 
-        <button type="submit" disabled={pending || Boolean(photoClientError)} className="rounded-full bg-sky-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-60">{pending ? "Saving your profile…" : "Save profile"}</button>
+        <button type="submit" disabled={pending || Boolean(photoClientError)} className="rounded-full bg-sky-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-sky-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 disabled:cursor-not-allowed disabled:opacity-60">{pending ? "Saving your profile…" : next ? "Save & continue to City Margins" : "Save profile"}</button>
       </fieldset>
 
       <div aria-live="polite" aria-atomic="true">
@@ -87,7 +89,7 @@ export function ProfileForm({ firstName, lastName, photoUrl, email }: ProfileFor
           <div className={`mt-6 rounded-xl border p-4 text-sm leading-6 ${state.status === "error" ? "border-rose-400/30 bg-rose-400/10 text-rose-200" : "border-sky-300/30 bg-sky-300/10 text-sky-100"}`} role={state.status === "error" ? "alert" : "status"}>
             <p>{state.message}</p>
             {state.status === "success" ? <Link href="/members" className="mt-2 inline-block font-semibold underline underline-offset-4 hover:text-white">Enter the members’ reading room →</Link> : null}
-            {state.status === "error" && state.message.includes("sign in") ? <Link href="/login" className="mt-2 inline-block font-semibold underline underline-offset-4">Sign in again →</Link> : null}
+            {state.status === "error" && state.message.includes("sign in") ? <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="mt-2 inline-block font-semibold underline underline-offset-4">Sign in again →</Link> : null}
           </div>
         ) : null}
       </div>

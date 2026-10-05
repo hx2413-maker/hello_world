@@ -15,10 +15,11 @@ export async function SiteHeader() {
           href="/"
           className="rounded-md text-lg font-semibold tracking-tight transition-colors hover:text-sky-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300"
         >
-          Hello, world<span className="text-sky-300">.</span>
+          The Reading Room<span className="text-sky-300">.</span>
         </Link>
         <nav aria-label="Main navigation" className="flex flex-wrap items-center gap-2 sm:gap-4">
           <Link href="/" className={navigationLink}>Home</Link>
+          <Link href="/margins" className={navigationLink}>City Margins</Link>
           <Link href="/books" className={navigationLink}>Books</Link>
           {user ? (
             <>

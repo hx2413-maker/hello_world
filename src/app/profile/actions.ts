@@ -2,7 +2,10 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { AUTH_NEXT_COOKIE, getSafeAuthNext } from "@/lib/auth-next";
 import type { ProfileFormState } from "./types";
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
@@ -61,11 +64,21 @@ export async function saveProfile(
   _previousState: ProfileFormState,
   formData: FormData,
 ): Promise<ProfileFormState> {
+  let state: ProfileFormState;
   try {
-    return await persistProfile(formData);
+    state = await persistProfile(formData);
   } catch {
     return { status: "error", message: "We couldn’t confirm your changes. Refresh the page before trying again." };
   }
+  if (state.status === "success") {
+    const cookieStore = await cookies();
+    const next = getSafeAuthNext(formData.get("next")) ?? getSafeAuthNext(cookieStore.get(AUTH_NEXT_COOKIE)?.value);
+    cookieStore.delete(AUTH_NEXT_COOKIE);
+    // Successful persistence guarantees both required names were saved. Keep
+    // redirects outside the catch so Next.js can finish the navigation.
+    if (next) redirect(next);
+  }
+  return state;
 }
 
 async function persistProfile(formData: FormData): Promise<ProfileFormState> {
