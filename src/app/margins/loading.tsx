@@ -1,18 +1,3 @@
 export default function MarginsLoading() {
-  return (
-    <main className="flex-1 bg-slate-950 px-5 py-16 sm:px-10" aria-busy="true" aria-label="Loading City Margins">
-      <div className="mx-auto max-w-6xl">
-        <p role="status" className="font-mono text-xs uppercase tracking-[0.2em] text-sky-300">Opening City Margins…</p>
-        <div aria-hidden="true" className="mt-8 motion-safe:animate-pulse">
-          <div className="h-12 w-3/4 max-w-lg rounded-lg bg-slate-800" />
-          <div className="mt-4 h-12 w-full max-w-2xl rounded-lg bg-slate-800" />
-          <div className="mt-8 h-5 w-2/3 max-w-lg rounded bg-slate-900" />
-          <div className="mt-16 grid items-start gap-8 lg:grid-cols-[340px_1fr]">
-            <div className="h-96 rounded-2xl border border-slate-800 bg-slate-900/50" />
-            <div className="space-y-5"><div className="h-60 rounded-2xl border border-slate-800 bg-slate-900/50" /><div className="h-60 rounded-2xl border border-slate-800 bg-slate-900/50" /></div>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+  return <main className="flex-1 px-4 py-9 sm:px-6" aria-busy="true" aria-label="Loading City Margins"><div className="mx-auto max-w-[1160px]"><p role="status" className="mb-6 text-xs font-semibold text-[#5d7f9b]">Fresh memes, coming right up…</p><div aria-hidden="true" className="motion-safe:animate-pulse"><div className="mb-8 h-9 w-4/5 max-w-sm rounded-lg bg-slate-200" /><div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_340px]"><div className="space-y-5"><div className="h-14 rounded-xl bg-white" /><div className="h-[420px] rounded-2xl border border-slate-200 bg-white" /><div className="h-[420px] rounded-2xl border border-slate-200 bg-white" /></div><div className="hidden h-[550px] rounded-2xl border border-slate-200 bg-white lg:block" /></div></div></div></main>;
 }

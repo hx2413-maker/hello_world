@@ -1,26 +1,19 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+:root { --background: #f3f5f7; --foreground: #172231; color-scheme: light; }
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+html { scroll-padding-top: 92px; }
+body { background: var(--background); color: var(--foreground); font-family: Arial, Helvetica, sans-serif; }
+::selection { background: #c4d8ec; color: #173c5d; }
+.cm-focus:focus-visible { outline: 3px solid #79a9cf; outline-offset: 3px; }
+.cm-card { border: 1px solid #e1e6ec; background: #fff; box-shadow: 0 2px 3px rgb(31 48 66 / 2%); }
+.cm-meme-type { font-family: Arial, Helvetica, sans-serif; font-weight: 800; letter-spacing: -0.035em; }
+.cm-field { width: 100%; border: 1px solid #dce3ea; border-radius: 10px; background: #f9fafb; color: #172231; }
+.cm-field:focus { outline: 3px solid #d3e4f2; border-color: #739fc2; }
+.cm-field::placeholder { color: #85919e; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }

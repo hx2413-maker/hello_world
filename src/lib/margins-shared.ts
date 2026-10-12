@@ -12,6 +12,8 @@ export type Caption = {
   viewer_vote: number | null;
   is_owner: boolean;
   is_starter: boolean;
+  image_path: string | null;
+  image_url: string | null;
 };
 
 export type GenerationRequest = {
@@ -23,6 +25,7 @@ export type GenerationRequest = {
   model: string;
   status: "pending" | "completed" | "failed";
   created_at: string;
+  image_path: string | null;
 };
 
 export type GenerationState = {
@@ -33,19 +36,19 @@ export type GenerationState = {
 export type VoteState = { status: "idle" | "error" | "success"; message?: string };
 
 const dailyPrompts = [
-  { label: "The main character commute", scene: "Reading on the 1 train, missing my stop because the chapter got good." },
-  { label: "A very New York budget", scene: "A Columbia student taking a book and a bodega coffee on a very low-budget weekend adventure." },
+  { label: "The main character commute", scene: "The 1 train doors closing right as I arrive, already late for a Columbia seminar." },
+  { label: "A very New York budget", scene: "A Columbia student realizing their weekend budget is one bodega coffee." },
   { label: "Library plot twist", scene: "Going to Butler Library to study, then spending an hour people-watching instead." },
   { label: "Small-town, big-city energy", scene: "A Midwesterner trying to make friendly eye contact with everyone on Broadway." },
-  { label: "A seat by the river", scene: "Reading by the Hudson while the wind has strong opinions about which page comes next." },
-  { label: "The weekend side quest", scene: "Setting out to explore downtown and ending up in a tiny bookstore for three hours." },
-  { label: "Dorm-room daydreams", scene: "Trying to have a peaceful literary evening in a dorm where someone is always microwaving something." },
-  { label: "A city in the margins", scene: "Finding a mysterious handwritten note in a secondhand book bought in New York." },
-  { label: "Rain check", scene: "Getting caught in the rain outside a bookstore and calling it an excuse to buy another book." },
-  { label: "Sunday reset, allegedly", scene: "Making an ambitious Sunday reading list, then spending the afternoon choosing the perfect cafe." },
+  { label: "A seat by the river", scene: "Trying to look mysterious by the Hudson while the wind steals my bagel wrapper." },
+  { label: "The weekend side quest", scene: "Setting out to explore downtown and accidentally taking the train in the wrong direction." },
+  { label: "Dorm-room daydreams", scene: "Trying to sleep in a Columbia dorm where someone is always microwaving something." },
+  { label: "Dining hall diplomacy", scene: "Strategically timing my dining hall trip around every person I am avoiding on campus." },
+  { label: "Rain check", scene: "Getting caught in NYC rain with an umbrella that immediately turns inside out." },
+  { label: "Sunday reset, allegedly", scene: "Making an ambitious Sunday study plan, then spending the afternoon choosing the perfect cafe." },
   { label: "The campus wildlife review", scene: "A campus pigeon looking more prepared for my seminar than I am." },
-  { label: "Between chapters", scene: "Sharing a tiny patch of sunlight on the Low Library steps with a book and a bagel." },
-  { label: "Subway book club", scene: "Trying to read the title of a stranger's book on the subway without making it weird." },
+  { label: "Low effort", scene: "Sharing a tiny patch of sunlight on the Low steps with a bagel and three missed deadlines." },
+  { label: "Subway etiquette", scene: "A Midwesterner politely waiting for everyone to exit the subway while three trains go by." },
   { label: "Home, in progress", scene: "Walking back to my dorm after a weekend in the city and realizing New York is starting to feel like home." },
 ];
 

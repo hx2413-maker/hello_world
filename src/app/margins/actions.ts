@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createGenerationWriter } from "@/lib/supabase/generation-writer";
 import { generateWithGemini, getGenerationConfig } from "@/lib/gemini";
 import { buildPrompt, SYSTEM_PROMPT } from "@/lib/generation-contract";
+import { ImageValidationError, normalizeMemeImage } from "@/lib/meme-image";
 import { isUuid, isVibe, validateScene, type GenerationState, type VoteState } from "@/lib/margins-shared";
 
 export async function generateCaption(_previousState: GenerationState, form: FormData): Promise<GenerationState> {
@@ -14,17 +15,32 @@ export async function generateCaption(_previousState: GenerationState, form: For
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return { status: "error", message: "Sign in before generating a caption." };
-    const scene = validateScene(form.get("scene"));
+    const upload = form.get("image");
+    const imageFile = upload instanceof File && upload.size > 0 ? upload : null;
+    if (upload !== null && !(upload instanceof File)) return { status: "error", message: "Choose a valid image file." };
+    const context = form.get("scene");
+    const scene = imageFile && typeof context === "string" && context.trim().length <= 280
+      ? (context.trim() ? (context.trim().length < 10 ? `Image context: ${context.trim()}` : context.trim()) : "Use the uploaded image as the scene.")
+      : validateScene(context);
     const vibe = form.get("vibe");
     if (!scene || !isVibe(vibe)) return { status: "error", message: "Describe your scene in 10–280 characters and choose a tone." };
 
     const config = getGenerationConfig();
     const writer = createGenerationWriter();
     if (!config || !writer) return { status: "error", message: "The caption studio is temporarily unavailable. You can still explore and vote on published captions." };
-    const prompt = buildPrompt(scene, vibe);
-    const { data: requestId, error: reserveError } = await supabase.rpc("reserve_generation", {
-      p_scene: scene, p_vibe: vibe, p_prompt: prompt, p_system_prompt: SYSTEM_PROMPT, p_model: config.model,
-    });
+    let image: Buffer | undefined;
+    if (imageFile) {
+      try { image = await normalizeMemeImage(imageFile); }
+      catch (error) {
+        return { status: "error", message: error instanceof ImageValidationError ? error.message : "Your image could not be read." };
+      }
+    }
+    const imagePath = image ? `${user.id}/${crypto.randomUUID()}.webp` : null;
+    const prompt = buildPrompt(scene, vibe, Boolean(image));
+    const params = { p_scene: scene, p_vibe: vibe, p_prompt: prompt, p_system_prompt: SYSTEM_PROMPT, p_model: config.model };
+    const { data: requestId, error: reserveError } = imagePath
+      ? await supabase.rpc("reserve_image_generation", { ...params, p_image_path: imagePath })
+      : await supabase.rpc("reserve_generation", params);
     if (reserveError || !isUuid(requestId)) {
       const quotaMessage = reserveError?.message === "Daily generation limit reached."
         ? "You’ve used today’s five generation attempts. Come back after midnight UTC for a fresh set."
@@ -34,9 +50,19 @@ export async function generateCaption(_previousState: GenerationState, form: For
       return { status: "error", message: quotaMessage };
     }
 
+    if (image && imagePath) {
+      // Storage RLS requires this quota-backed pending request, including when
+      // someone bypasses the app and calls Supabase directly.
+      const { error } = await supabase.storage.from("meme-images").upload(imagePath, image, { contentType: "image/webp", upsert: false });
+      if (error) {
+        await writer.fail(requestId).catch(() => undefined);
+        return { status: "error", message: "Your image couldn’t be uploaded. Please try again. This attempt counts toward today’s limit." };
+      }
+    }
+
     let output: Awaited<ReturnType<typeof generateWithGemini>>;
     try {
-      output = await generateWithGemini(prompt, config);
+      output = await generateWithGemini(prompt, config, image);
     } catch (error) {
       await writer.fail(requestId).catch(() => undefined);
       if (error instanceof Error && error.message === "provider_unavailable") {

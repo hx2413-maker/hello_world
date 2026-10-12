@@ -5,12 +5,13 @@ import { getCaptionFeed } from "@/lib/margins";
 import { getDailyPrompt } from "@/lib/margins-shared";
 import { CaptionCard } from "./caption-card";
 import { GenerationForm } from "./generation-form";
+import { MemeIcon } from "./icons";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export const metadata: Metadata = {
-  title: "City Margins | The Reading Room",
-  description: "Turn your little New York moments into AI captions. Find a daily prompt, choose a voice, and vote for the lines worth sharing.",
+  title: "City Margins — Campus life, meme material",
+  description: "Your daily dose of campus chaos. Make AI memes from photos or ideas, vote for your favorites, and share the best of New York student life.",
 };
 
 type Query = { sort?: string | string[]; page?: string | string[] };
@@ -24,89 +25,80 @@ export default async function MarginsPage({ searchParams }: { searchParams: Prom
   const daily = getDailyPrompt();
 
   return (
-    <main className="relative flex-1 overflow-hidden bg-slate-950 px-5 pb-8 text-white sm:px-10">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[540px] bg-[radial-gradient(ellipse_at_70%_0%,rgba(56,189,248,0.09),transparent_65%)]" />
-      <div className="relative mx-auto max-w-6xl">
-        <header className="grid gap-10 border-b border-slate-800 pb-12 pt-12 lg:grid-cols-[1fr_310px] lg:items-end lg:gap-16 lg:pb-16 lg:pt-20">
+    <main className="flex-1 px-4 pb-10 pt-7 sm:px-6 sm:pt-10">
+      <div className="mx-auto max-w-[1160px]">
+        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-slate-400 sm:text-xs">The Reading Room <span className="mx-2 text-slate-600">/</span> <span className="text-sky-300">After hours</span></p>
-            <h1 className="mt-6 text-5xl font-bold leading-[1.06] tracking-[-0.05em] sm:text-7xl">City life.<br /><span className="text-sky-300">With a better caption.</span></h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">For the missed trains, midnight slices, and surprisingly good days. Turn a small New York moment into a line worth sharing.</p>
-            <div className="mt-7 flex items-center gap-3 text-xs text-slate-300">
-              <span className="h-px w-7 bg-sky-300/60" aria-hidden="true" />
-              You bring the city. AI brings the words. We pick the good ones.
-            </div>
+            <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#5c7c98]"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#82acd0]" />Made for the group chat</div>
+            <h1 className="text-[26px] font-extrabold tracking-[-0.045em] text-slate-950 sm:text-[34px]">Campus life. Meme material.</h1>
+            <p className="mt-1.5 max-w-lg text-sm leading-6 text-slate-500">Small city moments. Unreasonably good captions. You pick the winners.</p>
           </div>
-          <aside className="rounded-2xl border border-sky-300/20 bg-sky-300/[0.04] p-6" aria-labelledby="daily-prompt-heading">
-            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-sky-300" />Today’s prompt</div>
-            <h2 id="daily-prompt-heading" className="mt-4 font-serif text-2xl leading-snug text-slate-100">{daily.label}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-400">{daily.scene}</p>
-            <a href="#caption-studio" className="mt-5 inline-flex min-h-9 items-center rounded text-xs font-semibold text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Make it your own <span aria-hidden="true" className="ml-2">↘</span></a>
-            <p className="mt-2 text-[10px] text-slate-500">A fresh starting point every day · UTC</p>
-          </aside>
-        </header>
+          <span className="hidden rotate-[-3deg] rounded-lg border border-[#c3d8e9] bg-[#e7f0f8] px-4 py-2 text-xs font-bold text-[#426c91] lg:block">NYC energy. Columbia blue.</span>
+        </div>
 
-        <div className="grid items-start gap-10 pt-10 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-10 lg:pt-12">
-          <section id="caption-studio" aria-labelledby="studio-heading" className="scroll-mt-8 rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-7">
-            <div className="flex items-center gap-3">
-              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl border border-sky-300/20 bg-sky-300/5 text-lg text-sky-300">✦</span>
-              <div>
-                <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-slate-500">City Margins</p>
-                <h2 id="studio-heading" className="mt-1 text-lg font-semibold tracking-tight">Your moment, remixed.</h2>
-              </div>
-            </div>
-            {user ? (
-              <GenerationForm dailyScene={daily.scene} />
-            ) : (
-              <div className="mt-6">
-                <p className="text-sm leading-7 text-slate-400">Describe a city moment. Pick witty, poetic, or deadpan. Get an AI caption for everyone to weigh in on.</p>
-                <div className="my-6 flex flex-wrap gap-2" aria-label="Available caption voices">
-                  {["Witty", "Poetic", "Deadpan"].map((voice) => <span key={voice} className="rounded-full border border-slate-700 px-3 py-1.5 text-xs text-slate-300">{voice}</span>)}
-                </div>
-                <Link href="/login?next=%2Fmargins" className="flex min-h-12 items-center justify-center rounded-full bg-sky-300 px-5 py-3 text-sm font-bold text-slate-950 transition-colors hover:bg-sky-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Sign in to create & rate <span aria-hidden="true" className="ml-2">↗</span></Link>
-                <p className="mt-4 text-xs leading-6 text-slate-400">The feed is open to everyone. Sign in to publish a caption and cast your vote.</p>
-              </div>
-            )}
-          </section>
-
-          <section id="caption-feed" aria-labelledby="feed-heading" className="min-w-0 scroll-mt-8">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">From campus to downtown</p>
-                <h2 id="feed-heading" className="mt-2 text-2xl font-semibold tracking-tight">In the margins</h2>
-              </div>
-              <nav aria-label="Sort captions" className="flex rounded-full border border-slate-700 bg-slate-900/60 p-1 text-xs">
-                <Link href="/margins?sort=new#caption-feed" aria-current={sort === "new" ? "page" : undefined} className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 ${sort === "new" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white"}`}>Newest</Link>
-                <Link href="/margins?sort=top#caption-feed" aria-current={sort === "top" ? "page" : undefined} className={`rounded-full px-4 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300 ${sort === "top" ? "bg-slate-700 text-white" : "text-slate-400 hover:text-white"}`}>Top rated</Link>
+        <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <section id="caption-feed" aria-labelledby="feed-heading" className="min-w-0">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:px-5">
+              <h2 id="feed-heading" className="text-sm font-bold text-slate-900">{sort === "top" ? "The crowd favorites" : "Fresh off the feed"}</h2>
+              <nav aria-label="Sort memes" className="flex items-center gap-1 rounded-lg bg-slate-100 p-1 text-xs font-bold">
+                <Link href="/margins?sort=new#caption-feed" aria-current={sort === "new" ? "page" : undefined} className={`cm-focus flex items-center gap-1.5 rounded-md px-3 py-2 ${sort === "new" ? "bg-white text-[#245b89] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}><MemeIcon name="bolt" className="h-3.5 w-3.5" />New</Link>
+                <Link href="/margins?sort=top#caption-feed" aria-current={sort === "top" ? "page" : undefined} className={`cm-focus flex items-center gap-1.5 rounded-md px-3 py-2 ${sort === "top" ? "bg-white text-[#245b89] shadow-sm" : "text-slate-500 hover:text-slate-800"}`}><MemeIcon name="up" className="h-3.5 w-3.5" />Top</Link>
               </nav>
             </div>
-            <p className="mb-6 text-xs leading-6 text-slate-400">Discover community captions and clearly labeled City Margins starters. {sort === "top" ? "Ranked by upvotes minus downvotes. " : null}{user ? "One vote per caption; tap again to undo." : "Sign in to help the best lines rise."}</p>
-            {captions.length > 0 ? (
-              <ul className="space-y-5">
-                {captions.map((caption) => <li key={caption.id}><CaptionCard caption={caption} signedIn={Boolean(user)} /></li>)}
-              </ul>
+            <p className="mb-4 px-1 text-[11px] leading-5 text-slate-500">{sort === "top" ? "Ranked by upvotes minus downvotes. " : ""}Community memes and labeled starters. {user ? "One vote each. Tap again to undo." : "Sign in to vote for the good ones."}</p>
+
+            {captions.length ? (
+              <ul className="space-y-5">{captions.map((caption) => <li key={caption.id}><CaptionCard caption={caption} signedIn={Boolean(user)} /></li>)}</ul>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-700 px-7 py-14 text-center sm:px-12">
-                <span aria-hidden="true" className="font-serif text-5xl text-sky-300/70">“ ”</span>
-                <h3 className="mt-4 text-xl font-semibold">{page > 1 ? "You’ve reached the last line." : "The city has stories. Start one."}</h3>
-                <p className="mx-auto mt-3 max-w-sm text-sm leading-7 text-slate-400">{page > 1 ? "Head back to the latest captions, or add a new moment of your own." : "Be the first to turn a little New York moment into an AI caption. Today’s prompt is a good place to begin."}</p>
-                <Link href={page > 1 ? "/margins#caption-feed" : user ? "#caption-studio" : "/login?next=%2Fmargins"} className="mt-6 inline-block rounded text-sm font-medium text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">{page > 1 ? "Back to the latest" : user ? "Write the first caption" : "Sign in to write the first caption"} →</Link>
+              <div className="cm-card rounded-2xl px-7 py-16 text-center">
+                <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#edf4fa] text-[#7ba5c7]"><MemeIcon name="image" className="h-8 w-8" /></span>
+                <h3 className="mt-5 text-xl font-bold tracking-tight">{page > 1 ? "You’re all caught up." : "The feed needs your sense of humor."}</h3>
+                <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-500">{page > 1 ? "Head back to the newest memes, or give the group chat something fresh." : "Turn a photo or a very specific campus moment into the first meme."}</p>
+                <Link href={page > 1 ? "/margins#caption-feed" : "#caption-studio"} className="cm-focus mt-6 inline-flex items-center rounded-lg bg-[#245b89] px-5 py-3 text-sm font-bold text-white hover:bg-[#19456c]">{page > 1 ? "Back to new memes" : "Make the first meme"}<span aria-hidden="true" className="ml-2">↗</span></Link>
               </div>
             )}
+
             {page > 1 || captions.length === 12 ? (
-              <nav aria-label="Caption pages" className="mt-7 flex items-center justify-between gap-4 text-sm">
-                {page > 1 ? <Link href={`/margins?sort=${sort}&page=${page - 1}#caption-feed`} className="rounded py-2 text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">← Previous</Link> : <span />}
-                <span className="font-mono text-xs text-slate-500">Page {page}</span>
-                {captions.length === 12 && page < 1000 ? <Link href={`/margins?sort=${sort}&page=${page + 1}#caption-feed`} className="rounded py-2 text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Next →</Link> : <span />}
+              <nav aria-label="Meme pages" className="mt-6 flex items-center justify-between gap-4 text-xs font-semibold">
+                {page > 1 ? <Link href={`/margins?sort=${sort}&page=${page - 1}#caption-feed`} className="cm-focus rounded-lg border border-slate-200 bg-white px-4 py-3 text-[#245b89] hover:border-[#8ab1cf]">← Previous</Link> : <span />}
+                <span className="text-slate-400">Page {page}</span>
+                {captions.length === 12 && page < 1000 ? <Link href={`/margins?sort=${sort}&page=${page + 1}#caption-feed`} className="cm-focus rounded-lg border border-slate-200 bg-white px-4 py-3 text-[#245b89] hover:border-[#8ab1cf]">More memes →</Link> : <span />}
               </nav>
             ) : null}
           </section>
-        </div>
 
-        <footer className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-slate-800 py-6 text-xs text-slate-500">
-          <p>City Margins <span className="mx-2 text-slate-700">/</span> A little outside the syllabus.</p>
-          <Link href="/books" className="rounded text-slate-400 hover:text-sky-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">Back to the books ↗</Link>
-        </footer>
+          <aside className="space-y-5">
+            <section id="caption-studio" aria-labelledby="studio-heading" className="cm-card scroll-mt-24 overflow-hidden rounded-2xl">
+              <div className="border-b border-[#dbe6ef] bg-[#eaf2f9] px-5 py-5">
+                <div className="flex items-center gap-2.5"><span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#5386af]"><MemeIcon name="sparkles" className="h-4 w-4" /></span><h2 id="studio-heading" className="text-lg font-bold tracking-tight text-[#204b70]">Make something funny.</h2></div>
+                <p className="mt-2 text-xs leading-5 text-[#68839a]">Your photo or idea. AI’s best shot at a punchline.</p>
+              </div>
+              <div className="px-5 pb-5">
+                {user ? <GenerationForm dailyScene={daily.scene} /> : (
+                  <div className="pt-5">
+                    <p className="text-sm leading-6 text-slate-600">Upload an image or describe a moment. Pick a voice. Let AI make it meme material.</p>
+                    <div className="my-5 flex items-center gap-2 text-[11px] font-semibold text-slate-500"><span className="rounded-md bg-slate-100 px-2.5 py-1.5">Witty</span><span className="rounded-md bg-slate-100 px-2.5 py-1.5">Poetic</span><span className="rounded-md bg-slate-100 px-2.5 py-1.5">Deadpan</span></div>
+                    <Link href="/login?next=%2Fmargins" className="cm-focus flex min-h-12 items-center justify-center rounded-xl bg-[#245b89] px-4 py-3 text-sm font-bold text-white hover:bg-[#19456c]">Sign in to create & vote <span aria-hidden="true" className="ml-2">↗</span></Link>
+                    <p className="mt-3 text-center text-[11px] text-slate-400">Just your Google account. Then you’re in.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section aria-labelledby="daily-prompt-heading" className="rounded-2xl border border-[#d7e4ee] bg-[#eaf2f8] px-5 py-5">
+              <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#5d7f9b]"><MemeIcon name="bolt" className="h-3.5 w-3.5" />Today’s meme fuel</p>
+              <h2 id="daily-prompt-heading" className="mt-3 text-base font-bold tracking-tight text-[#254965]">{daily.label}</h2>
+              <p className="mt-2 text-xs leading-6 text-[#617b90]">{daily.scene}</p>
+              <a href="#caption-studio" className="cm-focus mt-3 inline-block rounded text-[11px] font-bold text-[#245b89] hover:underline">Give it your spin ↗</a>
+            </section>
+
+            <section className="px-2 text-xs leading-6 text-slate-500" aria-label="About City Margins">
+              <p className="font-bold text-slate-600">For the moments between everything.</p>
+              <p className="mt-1">Dorm life, subway lore, and the things only your group chat gets. All AI captions are labeled. All votes come from people.</p>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-200 pt-3 text-[10px] text-slate-400"><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy</Link><span>City Margins · Made for campus</span></div>
+            </section>
+          </aside>
+        </div>
       </div>
     </main>
   );

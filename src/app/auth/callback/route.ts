@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { getProfile, isProfileComplete } from "@/lib/auth";
 import { getAuthOrigin } from "@/lib/auth-origin";
 import { AUTH_NEXT_COOKIE, getPostSignInPath } from "@/lib/auth-next";
 
@@ -33,16 +32,11 @@ export async function GET(request: Request) {
     return redirectWithoutCaching("/login?error=auth", origin);
   }
 
-  // Keep the authenticated session if the profile service is briefly unavailable;
-  // the profile page can explain the problem and offer a retry.
-  const profile = await getProfile(data.user.id).catch(() => null);
-  const profileComplete = isProfileComplete(profile);
   const next = (await cookies()).get(AUTH_NEXT_COOKIE)?.value;
   const response = redirectWithoutCaching(
-    getPostSignInPath(next, profileComplete),
+    getPostSignInPath(next),
     origin,
   );
-  // Onboarding retains the short-lived intent until a complete profile is saved.
-  if (profileComplete) response.cookies.delete(AUTH_NEXT_COOKIE);
+  response.cookies.delete(AUTH_NEXT_COOKIE);
   return response;
 }

@@ -1,4 +1,4 @@
-export const AUTH_NEXT_COOKIE = "reading-room-auth-next";
+export const AUTH_NEXT_COOKIE = "city-margins-auth-next";
 export const AUTH_NEXT_MAX_AGE = 10 * 60;
 
 // Keep return destinations deliberately narrow. Do not normalize or decode:
@@ -11,8 +11,6 @@ export function getSafeAuthNext(value: unknown): string | null {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.slice(captionPrefix.length)) ? value : null;
 }
 
-export function getPostSignInPath(next: unknown, profileComplete: boolean): string {
-  const destination = getSafeAuthNext(next);
-  if (profileComplete) return destination ?? "/members";
-  return destination ? `/profile?next=${encodeURIComponent(destination)}` : "/profile";
+export function getPostSignInPath(next: unknown): string {
+  return getSafeAuthNext(next) ?? "/margins";
 }

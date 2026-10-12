@@ -1,50 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Privacy | The Reading Room",
-  description: "How The Reading Room uses sign-in and profile information.",
-};
+export const metadata: Metadata = { title: "Privacy | City Margins", description: "How City Margins handles your account, images, AI prompts, and votes." };
 
 export default function PrivacyPage() {
   return (
-    <main className="flex-1 bg-slate-950 px-6 py-14 text-white sm:px-12 sm:py-20">
-      <article className="mx-auto max-w-3xl">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-sky-300">The Reading Room</p>
-        <h1 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">Privacy notice</h1>
-        <p className="mt-6 text-lg leading-8 text-slate-400">The Reading Room is an educational app with a public book collection, AI captions in City Margins, and a member area. This notice describes how the app uses your information.</p>
+    <main className="flex-1 px-5 py-10 sm:py-14">
+      <article className="cm-card mx-auto max-w-3xl rounded-2xl p-7 sm:p-12">
+        <Link href="/margins" className="cm-focus rounded text-xs font-bold text-[#245b89] hover:underline">← Back to the feed</Link>
+        <p className="mt-9 text-[10px] font-bold uppercase tracking-[0.2em] text-[#7097b6]">City Margins</p>
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Privacy, in plain language.</h1>
+        <p className="mt-5 text-sm leading-7 text-slate-500">City Margins is an educational meme app. You can browse publicly, or sign in to create AI captions and vote. Here’s what happens to your information.</p>
 
-        <div className="mt-12 space-y-9 border-t border-slate-800 pt-9 text-slate-300">
-          <section aria-labelledby="sign-in-privacy-heading">
-            <h2 id="sign-in-privacy-heading" className="text-xl font-semibold text-white">Google sign-in</h2>
-            <p className="mt-3 leading-7">When you continue with Google, Google shares basic account information with Supabase Auth, including your account identifier, email address, name, and profile photo when available. This information is used to create and recognize your account. The Reading Room does not receive your Google password.</p>
-          </section>
+        <div className="mt-9 space-y-8 border-t border-slate-200 pt-8 text-sm leading-7 text-slate-600">
+          <section aria-labelledby="account-privacy"><h2 id="account-privacy" className="text-lg font-bold text-slate-900">Your Google account</h2><p className="mt-3">Google shares basic account information with Supabase Auth, including your account identifier, email, name, and account photo when available. We use this to recognize your account and keep your votes and creations connected to you. City Margins does not receive your Google password.</p></section>
 
-          <section aria-labelledby="profile-privacy-heading">
-            <h2 id="profile-privacy-heading" className="text-xl font-semibold text-white">Your profile and photo</h2>
-            <p className="mt-3 leading-7">The first and last names you enter are stored in the app’s Supabase database and used to personalize your member area. You can change them in Profile. Uploading a profile photo is optional; the file is stored in Supabase Storage, and the database stores its file path.</p>
-            <p className="mt-3 leading-7">The app restricts profile and photo access to the signed-in owner. Photos are displayed through temporary links that expire after one hour. Anyone with a temporary photo link can view that photo until the link expires, so avoid sharing it if you want to keep the photo private.</p>
-          </section>
+          <section aria-labelledby="creation-privacy"><h2 id="creation-privacy" className="text-lg font-bold text-slate-900">Images, prompts, and AI captions</h2><p className="mt-3">When you generate a meme, your image (if uploaded), text idea or context, and the app’s creative instructions are sent to Google Gemini. Uploaded images are stored in Supabase Storage. The database stores generation prompts, model, usage information, timestamps, and status linked to your account. Failed generation attempts are retained to enforce usage limits.</p><p className="mt-3">A successful generation automatically publishes your image and AI caption to the public feed. Anyone can view or share the meme. Only upload images you have permission to share, and avoid personal or confidential content. Your saved prompts are visible only to you through the app and to administrators, but the AI may repeat information from them in the public caption.</p><p className="mt-3">Google processes submissions under its <a href="https://ai.google.dev/gemini-api/terms" className="cm-focus rounded font-medium text-[#245b89] underline underline-offset-4">Gemini API terms</a>. Do not submit sensitive information.</p></section>
 
-          <section aria-labelledby="captions-privacy-heading">
-            <h2 id="captions-privacy-heading" className="text-xl font-semibold text-white">AI captions and votes</h2>
-            <p className="mt-3 leading-7">When you generate a caption, your scene and the app’s writing instructions are sent to Google’s Gemini API. The app stores the scene, complete prompts, model, usage information, time, and generation status in Supabase, linked to your account. These records are readable only by you through the app and by its administrators. Failed attempts are also retained to enforce the daily limit.</p>
-            <p className="mt-3 leading-7">A completed caption and its tone are published automatically and can be read or shared by anyone. The AI may include details from your scene in that public caption, so leave out personal or confidential information. Your profile name and email are not attached to the public caption. Votes are linked to your account; other visitors see totals, not your individual vote or identity.</p>
-            <p className="mt-3 leading-7">Google processes prompts under its <a href="https://ai.google.dev/gemini-api/terms" className="text-sky-300 underline underline-offset-4">Gemini API terms</a>. Depending on the service tier, Google may use submitted content to improve its products. You can change or remove a vote at any time. Contact the app owner to request deletion of captions or your account data.</p>
-          </section>
+          <section aria-labelledby="votes-privacy"><h2 id="votes-privacy" className="text-lg font-bold text-slate-900">Votes and public identity</h2><p className="mt-3">Votes are linked to your account so you can change or remove them. Other visitors see vote totals, not individual voters. Your email and Google account name are not shown on public memes. Starter examples are labeled separately from community creations.</p></section>
 
-          <section aria-labelledby="services-privacy-heading">
-            <h2 id="services-privacy-heading" className="text-xl font-semibold text-white">Sessions and service providers</h2>
-            <p className="mt-3 leading-7">The app uses session cookies to keep you signed in and to control access to your profile and member area. Sign out to end the app session in your browser. Vercel hosts the application, and Supabase provides authentication, the database, and photo storage.</p>
-          </section>
+          <section aria-labelledby="services-privacy"><h2 id="services-privacy" className="text-lg font-bold text-slate-900">Cookies and service providers</h2><p className="mt-3">Session cookies keep you signed in. A short-lived cookie can remember which meme you were viewing during sign-in. Sign out to end the app session in this browser. Vercel hosts the app; Supabase provides authentication, database storage, and image storage; Google Gemini generates captions.</p></section>
 
-          <section aria-labelledby="contact-privacy-heading">
-            <h2 id="contact-privacy-heading" className="text-xl font-semibold text-white">Questions or deletion requests</h2>
-            <p className="mt-3 leading-7">To ask about your information or request deletion of your account, profile, and uploaded photo, contact the app owner at <a href="mailto:hanyuxie1234@gmail.com" className="break-all rounded-sm text-sky-300 underline decoration-sky-300/40 underline-offset-4 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">hanyuxie1234@gmail.com</a>.</p>
-          </section>
+          <section aria-labelledby="contact-privacy"><h2 id="contact-privacy" className="text-lg font-bold text-slate-900">Questions or deletion requests</h2><p className="mt-3">To ask about your information or request deletion of your account, uploaded images, or memes, contact <a href="mailto:hanyuxie1234@gmail.com" className="cm-focus break-all rounded font-medium text-[#245b89] underline underline-offset-4">hanyuxie1234@gmail.com</a>.</p></section>
         </div>
-
-        <Link href="/books" className="mt-12 inline-block rounded-md text-sm font-semibold text-sky-300 hover:text-sky-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-300">← Back to the books</Link>
       </article>
     </main>
   );

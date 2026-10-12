@@ -3,14 +3,14 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "The Reading Room | City Margins",
-  description: "A little shelf of big ideas, and AI captions for life between chapters. Create a NYC caption and vote for your favorites.",
+  title: "City Margins — Campus life, meme material",
+  description: "Make AI memes from your photos and ideas. Share campus chaos, rate the good ones, and find your daily dose of New York humor.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">
+      <body className="flex min-h-full flex-col bg-[#f3f5f7] text-slate-900">
         <SiteHeader />
         {children}
       </body>

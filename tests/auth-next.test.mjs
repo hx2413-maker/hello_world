@@ -4,14 +4,13 @@ import { getPostSignInPath, getSafeAuthNext } from "../src/lib/auth-next.ts";
 
 const caption = "/margins/603ed48d-2232-43be-ae89-aa1f762a73e2";
 
-test("returns members by default and admits only the feed or a caption UUID", () => {
+test("returns the meme feed by default and admits only the feed or a caption UUID", () => {
   assert.equal(getSafeAuthNext("/margins"), "/margins");
   assert.equal(getSafeAuthNext(caption), caption);
-  assert.equal(getPostSignInPath(undefined, true), "/members");
-  assert.equal(getPostSignInPath(caption, true), caption);
-  assert.equal(getPostSignInPath("/margins", true), "/margins");
+  assert.equal(getPostSignInPath(undefined), "/margins");
+  assert.equal(getPostSignInPath(caption), caption);
+  assert.equal(getPostSignInPath("/margins"), "/margins");
 });
-
 test("blocks open redirects, ambiguous paths, encodings, fragments and unexpected form values", () => {
   const invalid = [
     undefined, null, 1, ["/margins"], { next: "/margins" }, new Blob(["/margins"]),
@@ -23,17 +22,6 @@ test("blocks open redirects, ambiguous paths, encodings, fragments and unexpecte
   ];
   for (const value of invalid) {
     assert.equal(getSafeAuthNext(value), null, `Unexpected destination accepted: ${String(value)}`);
-    assert.equal(getPostSignInPath(value, true), "/members");
-    assert.equal(getPostSignInPath(value, false), "/profile");
-  }
-});
-
-test("requires onboarding before continuing to a caption and preserves only validated intent", () => {
-  assert.equal(getPostSignInPath(undefined, false), "/profile");
-  for (const next of ["/margins", caption]) {
-    const onboarding = new URL(getPostSignInPath(next, false), "https://reading-room.example");
-    assert.equal(onboarding.pathname, "/profile");
-    assert.equal(onboarding.searchParams.get("next"), next);
-    assert.equal(getPostSignInPath(onboarding.searchParams.get("next"), true), next);
+    assert.equal(getPostSignInPath(value), "/margins");
   }
 });

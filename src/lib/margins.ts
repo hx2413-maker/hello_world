@@ -9,7 +9,16 @@ export async function getCaptionFeed(sort: "new" | "top", offset = 0, captionId?
     p_sort: sort, p_limit: 12, p_offset: offset, p_caption_id: captionId ?? null,
   });
   if (error) throw new Error("The captions could not be loaded. Please try again.");
-  return (data ?? []) as Caption[];
+  const captions = (data ?? []) as Omit<Caption, "image_url">[];
+  const paths = [...new Set(captions.flatMap((caption) => caption.image_path ? [caption.image_path] : []))];
+  const signedUrls = new Map<string, string>();
+  if (paths.length) {
+    // Storage RLS allows signing only images that have been published in the feed.
+    const { data: images, error: imageError } = await supabase.storage.from("meme-images").createSignedUrls(paths, 3600);
+    if (imageError) throw new Error("Meme images could not be loaded. Please try again.");
+    for (const image of images ?? []) if (image.path && image.signedUrl) signedUrls.set(image.path, image.signedUrl);
+  }
+  return captions.map((caption) => ({ ...caption, image_path: caption.image_path ?? null, image_url: caption.image_path ? signedUrls.get(caption.image_path) ?? null : null }));
 }
 
 export async function getGenerationForCaption(id: string): Promise<GenerationRequest | null> {
@@ -19,7 +28,7 @@ export async function getGenerationForCaption(id: string): Promise<GenerationReq
   if (!user) return null;
   // Caption and request IDs are identical; RLS exposes only this user's request.
   const { data, error } = await supabase.from("generation_requests")
-    .select("id, scene, vibe, prompt, system_prompt, model, status, created_at")
+    .select("id, scene, vibe, prompt, system_prompt, model, status, created_at, image_path")
     .eq("id", id).eq("user_id", user.id).maybeSingle<GenerationRequest>();
   if (error) throw new Error("Your saved prompt could not be loaded.");
   return data;
