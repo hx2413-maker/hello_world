@@ -67,6 +67,7 @@ Historical migrations remain unchanged as an audit trail. Existing production al
 2. Deploy the new application, then confirm sign-in and creation work without profile onboarding.
 3. Apply `supabase/post-deploy/20261012_archive_reading_room.sql` only after the new version is live. It removes obsolete triggers and API access while retaining old records and files in a locked archive for recovery. It does not delete accounts, captions, votes, or generation history.
 4. Apply `supabase/migrations/20261012210356_city_margins_member_profiles.sql` to add optional meme profiles before deploying the profile editor. The CLI uses 14-digit timestamps while the older files use 8-digit dates: follow this explicit order, not a lexical filename sort.
+5. Apply `supabase/migrations/20261012211830_restore_feed_author_profiles.sql` last. It repairs deployments whose feed function still has the pre-profile return columns, which hides saved names and avatars on existing memes. It changes no profile, image, caption, or vote data. Verify the live RPC includes `author_name`, `author_avatar_path`, and `author_updated_at`; checking only migration history is insufficient.
 
 For a new empty database, apply the historical schema/migrations in chronological order, then the image migration and archive cleanup. SQL security checks are in `supabase/tests/` and should run in a disposable Postgres fixture, never against production. Image and authentication boundary tests run via `npm test`.
 
@@ -78,7 +79,7 @@ Acceptance checks:
 
 - Signed-out visitors browse memes and images but must sign in to create or vote.
 - Google sign-in returns to the requested meme/feed with no name/profile form.
-- The Profile link opens name/avatar settings. Save persists after refresh and updates existing meme cards; cancel discards edits; remove hides the avatar. Signed-out profile visits return through Google sign-in. Cross-user profile/avatar changes are denied.
+- The Profile link opens name/avatar settings. Save persists after refresh and updates existing meme cards, including memes posted before the profile was created. Avatar replacement updates both owner and public views; cancel discards edits; remove hides the avatar. Signed-out profile visits return through Google sign-in. Cross-user profile/avatar changes are denied.
 - Text generation preserves all three tones.
 - An image-only submission (no descriptive prompt) generates a caption grounded in visible image details and Columbia/NYC life, saves the image and exact prompts, and appears in the public feed.
 - A second user can vote; the first vote creates a row, refresh preserves it, and toggling removes it.

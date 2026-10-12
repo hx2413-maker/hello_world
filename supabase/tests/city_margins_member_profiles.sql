@@ -25,6 +25,7 @@ select set_config('test.member_b', gen_random_uuid()::text, true);
 select set_config('test.member_c', gen_random_uuid()::text, true);
 select set_config('test.avatar_a', current_setting('test.member_a') || '/avatar.webp', true);
 select set_config('test.avatar_b', current_setting('test.member_b') || '/avatar.webp', true);
+select set_config('test.avatar_c', current_setting('test.member_c') || '/avatar.webp', true);
 insert into auth.users (id, aud, role, email, raw_app_meta_data, raw_user_meta_data)
 select id::uuid, 'authenticated', 'authenticated', id || '@example.invalid', '{}', '{}'
 from unnest(array[current_setting('test.member_a'), current_setting('test.member_b'), current_setting('test.member_c')]) as id;
@@ -131,6 +132,38 @@ with changed as (update storage.objects set metadata = '{}' where name = current
 select pg_temp.assert_true((select count(*) = 0 from changed), 'anonymous readers cannot replace avatars');
 with changed as (delete from storage.objects where name = current_setting('test.avatar_a') returning id)
 select pg_temp.assert_true((select count(*) = 0 from changed), 'anonymous readers cannot delete avatars');
+reset role;
+
+-- Profiles are live attribution, not a snapshot taken when the meme is posted.
+-- Member C published above without a profile; adding and replacing their avatar
+-- must update that same existing meme for its owner and for public visitors.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', current_setting('test.member_c'), true);
+insert into storage.objects (bucket_id, name, metadata) values ('member-avatars', current_setting('test.avatar_c'), '{"mimetype":"image/webp","size":64}');
+insert into public.member_profiles (display_name, avatar_path) values ('After the first meme', current_setting('test.avatar_c'));
+select set_config('test.member_c_original_updated', (select updated_at::text from public.member_profiles), true);
+select pg_temp.assert_true((select is_owner and author_name = 'After the first meme' and author_avatar_path = current_setting('test.avatar_c') and author_updated_at = current_setting('test.member_c_original_updated')::timestamptz from public.get_caption_feed(p_caption_id => current_setting('test.member_caption_c')::uuid)), 'owner sees a new profile and avatar on an existing meme');
+reset role;
+set local role anon;
+select set_config('request.jwt.claim.sub', '', true);
+select pg_temp.assert_true((select not is_owner and author_name = 'After the first meme' and author_avatar_path = current_setting('test.avatar_c') and author_updated_at = current_setting('test.member_c_original_updated')::timestamptz from public.get_caption_feed(p_caption_id => current_setting('test.member_caption_c')::uuid)), 'anonymous feed sees a profile created after publication');
+select pg_temp.assert_true((select count(*) = 1 from storage.objects where name = current_setting('test.avatar_c')), 'avatar added after publication is publicly readable');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', current_setting('test.member_c'), true);
+insert into storage.objects (bucket_id, name, metadata) values ('member-avatars', current_setting('test.avatar_c'), '{"mimetype":"image/webp","size":128}')
+on conflict (bucket_id, name) do update set metadata = excluded.metadata;
+update public.member_profiles set display_name = 'New photo, same meme', avatar_path = current_setting('test.avatar_c');
+select set_config('test.member_c_replaced_updated', (select updated_at::text from public.member_profiles), true);
+select pg_temp.assert_true(current_setting('test.member_c_replaced_updated')::timestamptz > current_setting('test.member_c_original_updated')::timestamptz, 'replacing an avatar advances its cache-busting version');
+select pg_temp.assert_true((select is_owner and author_name = 'New photo, same meme' and author_avatar_path = current_setting('test.avatar_c') and author_updated_at = current_setting('test.member_c_replaced_updated')::timestamptz from public.get_caption_feed(p_caption_id => current_setting('test.member_caption_c')::uuid)), 'owner sees the replacement avatar version and name on an existing meme');
+reset role;
+set local role anon;
+select set_config('request.jwt.claim.sub', '', true);
+select pg_temp.assert_true((select not is_owner and author_name = 'New photo, same meme' and author_avatar_path = current_setting('test.avatar_c') and author_updated_at = current_setting('test.member_c_replaced_updated')::timestamptz from public.get_caption_feed(p_caption_id => current_setting('test.member_caption_c')::uuid)), 'anonymous feed sees the replacement avatar version and name on an existing meme');
+select pg_temp.assert_true((select metadata ->> 'size' = '128' from storage.objects where name = current_setting('test.avatar_c')), 'public avatar reads resolve the replaced object');
+select pg_temp.expect_sqlstate('select * from public.member_profiles', '42501', 'updated public attribution still does not expose private profile rows');
 reset role;
 
 set local role authenticated;
