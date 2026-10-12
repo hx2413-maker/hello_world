@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Caption } from "@/lib/margins-shared";
+import { Avatar } from "@/components/avatar";
 import { ShareLink } from "./share-link";
 import { VoteControls } from "./vote-controls";
 import { MemeIcon } from "./icons";
@@ -9,13 +10,13 @@ const vibeLabels = { witty: "Witty", poetic: "Poetic", deadpan: "Deadpan" };
 
 export function CaptionCard({ caption, signedIn, featured = false }: { caption: Caption; signedIn: boolean; featured?: boolean }) {
   const date = new Date(caption.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const sourceLabel = caption.is_starter ? "City Margins starter" : caption.is_owner ? "Your meme" : "Community meme";
+  const sourceLabel = caption.is_starter ? "City Margins starter" : caption.author_name || (caption.is_owner ? "Your meme" : "Community meme");
   return (
     <article className="cm-card overflow-hidden rounded-2xl" aria-label={`${vibeLabels[caption.vibe]} AI meme`}>
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-4 sm:px-6">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-[11px]">
-          <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#edf4fa] text-[#5b8fb9]"><MemeIcon name={caption.is_starter ? "sparkles" : "bolt"} className="h-3.5 w-3.5" /></span>
-          <span className="font-bold text-slate-700">{sourceLabel}</span><span aria-hidden="true" className="text-slate-300">·</span>
+          {caption.is_starter ? <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#edf4fa] text-[#5b8fb9]"><MemeIcon name="sparkles" className="h-3.5 w-3.5" /></span> : <Avatar src={caption.author_avatar_url} name={caption.author_name} size={28} />}
+          <span className="min-w-0 max-w-full break-words font-bold text-slate-700">{sourceLabel}</span>{caption.is_owner && caption.author_name && !caption.is_starter ? <span className="rounded bg-[#edf4fa] px-1.5 py-0.5 text-[10px] font-semibold text-[#5b7d98]">You</span> : null}<span aria-hidden="true" className="text-slate-300">·</span>
           <Link href={`/margins/${caption.id}`} className="cm-focus rounded text-slate-400 hover:text-[#245b89]" aria-label={`Open meme from ${date}`}><time dateTime={caption.created_at}>{date}</time></Link>
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500">AI caption · {vibeLabels[caption.vibe]}</span>

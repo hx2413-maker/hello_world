@@ -14,6 +14,10 @@ export type Caption = {
   is_starter: boolean;
   image_path: string | null;
   image_url: string | null;
+  author_name: string | null;
+  author_avatar_path: string | null;
+  author_avatar_url: string | null;
+  author_updated_at: string | null;
 };
 
 export type GenerationRequest = {

@@ -9,7 +9,7 @@ export async function getCaptionFeed(sort: "new" | "top", offset = 0, captionId?
     p_sort: sort, p_limit: 12, p_offset: offset, p_caption_id: captionId ?? null,
   });
   if (error) throw new Error("The captions could not be loaded. Please try again.");
-  const captions = (data ?? []) as Omit<Caption, "image_url">[];
+  const captions = (data ?? []) as Omit<Caption, "image_url" | "author_avatar_url">[];
   const paths = [...new Set(captions.flatMap((caption) => caption.image_path ? [caption.image_path] : []))];
   const signedUrls = new Map<string, string>();
   if (paths.length) {
@@ -18,7 +18,19 @@ export async function getCaptionFeed(sort: "new" | "top", offset = 0, captionId?
     if (imageError) throw new Error("Meme images could not be loaded. Please try again.");
     for (const image of images ?? []) if (image.path && image.signedUrl) signedUrls.set(image.path, image.signedUrl);
   }
-  return captions.map((caption) => ({ ...caption, image_path: caption.image_path ?? null, image_url: caption.image_path ? signedUrls.get(caption.image_path) ?? null : null }));
+  const avatarPaths = [...new Set(captions.flatMap((caption) => caption.author_avatar_path ? [caption.author_avatar_path] : []))];
+  const avatars = new Map<string, string>();
+  if (avatarPaths.length) {
+    const { data: images } = await supabase.storage.from("member-avatars").createSignedUrls(avatarPaths, 300);
+    for (const image of images ?? []) if (image.path && image.signedUrl) avatars.set(image.path, image.signedUrl);
+  }
+  return captions.map((caption) => {
+    const avatar = caption.author_avatar_path ? avatars.get(caption.author_avatar_path) : null;
+    return { ...caption, image_path: caption.image_path ?? null, image_url: caption.image_path ? signedUrls.get(caption.image_path) ?? null : null,
+      author_name: caption.author_name ?? null, author_avatar_path: caption.author_avatar_path ?? null,
+      author_updated_at: caption.author_updated_at ?? null,
+      author_avatar_url: avatar ? `${avatar}&v=${encodeURIComponent(caption.author_updated_at ?? "")}` : null };
+  });
 }
 
 export async function getGenerationForCaption(id: string): Promise<GenerationRequest | null> {

@@ -7,6 +7,7 @@ A standalone Columbia and NYC meme-generation and rating app, built with Next.js
 - Removed the book catalog, member room, profile onboarding, and their active backend dependencies. Sign-in returns directly to the meme feed or the meme the visitor was viewing.
 - Rebuilt the interface around large meme cards, prominent up/down votes, New/Top tabs, sharing, and a compact creation panel. Design research: [Imgflip’s feed](https://imgflip.com/m/fun), [Memedroid](https://www.memedroid.com/), and [9GAG](https://9gag.com/). The app uses its own branding and Columbia-blue palette.
 - Retained text-idea generation with witty, poetic, and deadpan tones. Added uploaded-image generation: Gemini inspects the actual image and writes a caption tied to a visible detail and Columbia/NYC life. The result displays as a caption above the source image, rather than claiming that the uploaded image itself was AI generated.
+- Added an optional meme profile at `/profile`: edit a display name, preview and replace an avatar, or remove it. Saved names and avatars appear beside the user's memes. Google account details are never automatically published, and profile setup does not interrupt sign-in.
 
 ## Product choices for Sam
 
@@ -24,6 +25,8 @@ The feed includes genuinely AI-generated starter posts from a separate account, 
 | `generation_requests` | Request owner only | Authenticated reservation RPC; server-only completion/failure |
 | `votes` | Owner’s individual rows; public aggregate counts | Authenticated owner only, one vote per caption |
 | `daily_generation_budget` | No app-client access | Private database quota enforcement |
+| `member_profiles` | Owner only; the feed exposes only the chosen name/avatar of published authors | Authenticated owner inserts or edits their own name/avatar; ownership cannot change |
+| `member-avatars` storage | Owner; public signed reads only for a published author's selected avatar | Owner only, one fixed WebP object per account, up to 2 MiB |
 | `meme-images` storage | Published images public through RLS-approved signed URLs; unpublished images owner-only | Owner uploads only to a reserved, quota-backed pending request path; no overwrite; deletion only before any generation references an image |
 
 RLS is enabled on all application tables. The legacy tables move to a non-exposed, locked archive schema; all application grants and profile-photo policies are removed. Supabase-managed internal tables are left under Supabase’s own controls.
@@ -33,6 +36,8 @@ The first vote inserts a row associated with both the authenticated user and cap
 Uploads accept JPEG, PNG, and WebP up to 2 MiB and 20 megapixels. The server decodes them, rejects format spoofing and animated images, strips metadata, and resizes to at most 1600 × 1600 before encoding WebP. The normalized source image is stored and sent inline to Gemini. The exact system/user prompts, tone, model, and token usage are saved. Pending or failed images stay private to their owner. The composer explains that successful memes become public and images are sent to Google Gemini.
 
 The service-role key is isolated in a server-only module used only for completion/failure RPCs. Reads, image uploads, reservations, and votes use the signed-in session and RLS. Provider keys never reach browser JavaScript.
+
+Avatar uploads use the same image decoding, format validation, and metadata stripping as meme uploads, then crop to a 256 × 256 WebP. They are not sent to Gemini. Profile mutations use the user's session, never the service key. Removing an avatar clears the public reference; its single stored object remains private until the next upload overwrites it. Previously signed links expire after five minutes.
 
 ## Local development
 
@@ -52,7 +57,7 @@ npm run lint
 npm run build
 ```
 
-Visit `/margins`. `/` redirects to the feed. `/margins/[id]` is the share page; `/login`, `/auth/callback`, and `/privacy` support it. Legacy book/member/profile routes are removed.
+Visit `/margins`. `/` redirects to the feed. `/margins/[id]` is the share page; `/profile` manages the signed-in user's meme identity; `/login`, `/auth/callback`, and `/privacy` support them. Legacy book/member routes and mandatory profile onboarding are removed.
 
 ## Database rollout
 
@@ -61,6 +66,7 @@ Historical migrations remain unchanged as an audit trail. Existing production al
 1. Apply `supabase/migrations/20261012_city_margins_images.sql` before deploying this version. It is additive and preserves text-only posts and their links.
 2. Deploy the new application, then confirm sign-in and creation work without profile onboarding.
 3. Apply `supabase/post-deploy/20261012_archive_reading_room.sql` only after the new version is live. It removes obsolete triggers and API access while retaining old records and files in a locked archive for recovery. It does not delete accounts, captions, votes, or generation history.
+4. Apply `supabase/migrations/20261012210356_city_margins_member_profiles.sql` to add optional meme profiles before deploying the profile editor. The CLI uses 14-digit timestamps while the older files use 8-digit dates: follow this explicit order, not a lexical filename sort.
 
 For a new empty database, apply the historical schema/migrations in chronological order, then the image migration and archive cleanup. SQL security checks are in `supabase/tests/` and should run in a disposable Postgres fixture, never against production. Image and authentication boundary tests run via `npm test`.
 
@@ -72,6 +78,7 @@ Acceptance checks:
 
 - Signed-out visitors browse memes and images but must sign in to create or vote.
 - Google sign-in returns to the requested meme/feed with no name/profile form.
+- The Profile link opens name/avatar settings. Save persists after refresh and updates existing meme cards; cancel discards edits; remove hides the avatar. Signed-out profile visits return through Google sign-in. Cross-user profile/avatar changes are denied.
 - Text generation preserves all three tones.
 - An image-only submission (no descriptive prompt) generates a caption grounded in visible image details and Columbia/NYC life, saves the image and exact prompts, and appears in the public feed.
 - A second user can vote; the first vote creates a row, refresh preserves it, and toggling removes it.
