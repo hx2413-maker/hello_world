@@ -33,11 +33,13 @@ RLS is enabled on all application tables. The legacy tables move to a non-expose
 
 The first vote inserts a row associated with both the authenticated user and caption. Changing a vote updates it; clicking the selected vote removes it. The database enforces ownership independently of the UI. Generation has five attempts per user per UTC day and a shared 100-attempt daily ceiling. Failed model calls count toward the limit.
 
-Uploads accept JPEG, PNG, and WebP up to 2 MiB and 20 megapixels. The server decodes them, rejects format spoofing and animated images, strips metadata, and resizes to at most 1600 × 1600 before encoding WebP. The normalized source image is stored and sent inline to Gemini. The exact system/user prompts, tone, model, and token usage are saved. Pending or failed images stay private to their owner. The composer explains that successful memes become public and images are sent to Google Gemini.
+The public feed uses three thumbnail columns on desktop and the original single-column cards on mobile. The daily idea appears above the feed. Creation lives at `/create`, which requires sign-in; `/create?prompt=today` pre-fills the daily idea and is preserved through Google login.
+
+Meme uploads accept JPEG, PNG, WebP, and GIF up to 2 MiB and 20 megapixels per frame. The server rejects format spoofing, strips metadata, and resizes still images to at most 1600 × 1600 before encoding WebP. GIF and WebP animations retain their frames and timing in the published WebP, with limits of 120 frames, 15 seconds, 60 million decoded pixels, and an 800 × 800 output bound. Gemini receives up to three independently encoded still frames in chronological order. The exact system/user prompts (including the animation sampling instruction), tone, model, and token usage are saved. Pending or failed media stay private to their owner. The composer explains that successful memes become public and images are sent to Google Gemini.
 
 The service-role key is isolated in a server-only module used only for completion/failure RPCs. Reads, image uploads, reservations, and votes use the signed-in session and RLS. Provider keys never reach browser JavaScript.
 
-Avatar uploads use the same image decoding, format validation, and metadata stripping as meme uploads, then crop to a 256 × 256 WebP. They are not sent to Gemini. Profile mutations use the user's session, never the service key. Removing an avatar clears the public reference; its single stored object remains private until the next upload overwrites it. Previously signed links expire after five minutes.
+Avatar uploads remain static JPEG, PNG, or WebP, with image decoding, format validation, and metadata stripping, then crop to a 256 × 256 WebP. They are not sent to Gemini. Profile mutations use the user's session, never the service key. Removing an avatar clears the public reference; its single stored object remains private until the next upload overwrites it. Previously signed links expire after five minutes.
 
 ## Local development
 

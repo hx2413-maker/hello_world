@@ -8,7 +8,7 @@ export function getGenerationConfig() {
   return { apiKey, model };
 }
 
-export async function generateWithGemini(prompt: string, config: { apiKey: string; model: string }, image?: Buffer) {
+export async function generateWithGemini(prompt: string, config: { apiKey: string; model: string }, frames: Buffer[] = []) {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent`,
     {
@@ -17,7 +17,7 @@ export async function generateWithGemini(prompt: string, config: { apiKey: strin
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: [{ role: "user", parts: [
-          ...(image ? [{ inlineData: { mimeType: "image/webp", data: image.toString("base64") } }] : []),
+          ...frames.map((image) => ({ inlineData: { mimeType: "image/webp", data: image.toString("base64") } })),
           { text: prompt },
         ] }],
         generationConfig: { maxOutputTokens: 256, temperature: 0.9, candidateCount: 1 },

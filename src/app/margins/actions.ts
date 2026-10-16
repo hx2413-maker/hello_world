@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createGenerationWriter } from "@/lib/supabase/generation-writer";
 import { generateWithGemini, getGenerationConfig } from "@/lib/gemini";
 import { buildPrompt, SYSTEM_PROMPT } from "@/lib/generation-contract";
-import { ImageValidationError, normalizeMemeImage } from "@/lib/meme-image";
+import { ImageValidationError, prepareMemeUpload, type MemeUpload } from "@/lib/meme-image";
 import { isUuid, isVibe, validateScene, type GenerationState, type VoteState } from "@/lib/margins-shared";
 
 export async function generateCaption(_previousState: GenerationState, form: FormData): Promise<GenerationState> {
@@ -28,15 +28,17 @@ export async function generateCaption(_previousState: GenerationState, form: For
     const config = getGenerationConfig();
     const writer = createGenerationWriter();
     if (!config || !writer) return { status: "error", message: "The caption studio is temporarily unavailable. You can still explore and vote on published captions." };
-    let image: Buffer | undefined;
+    let image: MemeUpload | undefined;
     if (imageFile) {
-      try { image = await normalizeMemeImage(imageFile); }
+      try { image = await prepareMemeUpload(imageFile); }
       catch (error) {
         return { status: "error", message: error instanceof ImageValidationError ? error.message : "Your image could not be read." };
       }
     }
     const imagePath = image ? `${user.id}/${crypto.randomUUID()}.webp` : null;
-    const prompt = buildPrompt(scene, vibe, Boolean(image));
+    const prompt = buildPrompt(scene, vibe, Boolean(image)) + (image?.animated
+      ? `\nThe ${image.frames.length} attached images are sampled frames from one animation, in chronological order. Base the joke on visible details across these frames; do not invent unseen motion.`
+      : "");
     const params = { p_scene: scene, p_vibe: vibe, p_prompt: prompt, p_system_prompt: SYSTEM_PROMPT, p_model: config.model };
     const { data: requestId, error: reserveError } = imagePath
       ? await supabase.rpc("reserve_image_generation", { ...params, p_image_path: imagePath })
@@ -53,7 +55,7 @@ export async function generateCaption(_previousState: GenerationState, form: For
     if (image && imagePath) {
       // Storage RLS requires this quota-backed pending request, including when
       // someone bypasses the app and calls Supabase directly.
-      const { error } = await supabase.storage.from("meme-images").upload(imagePath, image, { contentType: "image/webp", upsert: false });
+      const { error } = await supabase.storage.from("meme-images").upload(imagePath, image.media, { contentType: "image/webp", upsert: false });
       if (error) {
         await writer.fail(requestId).catch(() => undefined);
         return { status: "error", message: "Your image couldn’t be uploaded. Please try again. This attempt counts toward today’s limit." };
@@ -62,7 +64,7 @@ export async function generateCaption(_previousState: GenerationState, form: For
 
     let output: Awaited<ReturnType<typeof generateWithGemini>>;
     try {
-      output = await generateWithGemini(prompt, config, image);
+      output = await generateWithGemini(prompt, config, image?.frames);
     } catch (error) {
       await writer.fail(requestId).catch(() => undefined);
       if (error instanceof Error && error.message === "provider_unavailable") {

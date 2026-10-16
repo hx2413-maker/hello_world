@@ -13,6 +13,12 @@ test("returns the meme feed by default and admits the feed, profile, or a captio
   assert.equal(getPostSignInPath(caption), caption);
   assert.equal(getPostSignInPath("/margins"), "/margins");
 });
+test("returns creators to the studio and preserves only the exact daily-idea destination", () => {
+  for (const path of ["/create", "/create?prompt=today"]) {
+    assert.equal(getSafeAuthNext(path), path);
+    assert.equal(getPostSignInPath(path), path);
+  }
+});
 test("blocks open redirects, ambiguous paths, encodings, fragments and unexpected form values", () => {
   const invalid = [
     undefined, null, 1, ["/margins"], { next: "/margins" }, new Blob(["/margins"]),
@@ -20,6 +26,8 @@ test("blocks open redirects, ambiguous paths, encodings, fragments and unexpecte
     "/margins//example.com", "/margins/../members", "/margins/../../example.com", "/members", "/profile/", "/profile?next=https://example.com", "/auth/callback",
     "/margins/", "/margins-fake", "/MARGINS", "/MARGINS/603ed48d-2232-43be-ae89-aa1f762a73e2", "/margins/not-a-uuid",
     "/margins?next=https://example.com", "/margins#caption-studio", "/margins%2f%2fexample.com", "%2Fmargins", "%252Fmargins",
+    "/create/", "/create?", "/create?prompt=other", "/create?prompt=TODAY", "/create?prompt=%74oday", "/create?prompt=today&next=https://example.com",
+    "/create?prompt=today&prompt=today", "/create?next=https://example.com", "/create?prompt=today#form", "/create#form", "%2Fcreate", "/CREATE", "/create\n", "/create?prompt=today\n",
     "/margins\n", " /margins", "/margins ", "/margins\u0000", `${caption}/extra`, `${caption}?sort=top`, `${caption}\n`, `${caption}\r\n`, `${caption}\u0000`,
   ];
   for (const value of invalid) {

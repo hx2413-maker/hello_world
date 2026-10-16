@@ -16,4 +16,19 @@ body { background: var(--background); color: var(--foreground); font-family: Ari
 .cm-field { width: 100%; border: 1px solid #dce3ea; border-radius: 10px; background: #f9fafb; color: #172231; }
 .cm-field:focus { outline: 3px solid #d3e4f2; border-color: #739fc2; }
 .cm-field::placeholder { color: #637286; opacity: 1; }
+/* Keep the original full-width meme cards on phones; desktop becomes a gallery. */
+@media (min-width: 1024px) {
+  .cm-gallery-card { display: flex; height: 100%; flex-direction: column; overflow: visible; border: 0; background: transparent; box-shadow: none; }
+  .cm-gallery-card > header { order: 2; padding: 12px 0 8px; }
+  .cm-gallery-card > footer { order: 3; margin-top: auto; padding: 8px 0 0; gap: 8px; }
+  .cm-gallery-card .cm-image-meme { display: flex; flex-direction: column; border: 0; border-radius: 14px; }
+  .cm-gallery-card .cm-image-visual { order: -1; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 14px; background: #e5ebf1; }
+  .cm-gallery-card .cm-image-visual img { height: 100%; width: 100%; object-fit: contain; background: transparent; }
+  .cm-gallery-card .cm-image-caption { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; padding: 12px 0 0; font-size: 17px; line-height: 1.4; letter-spacing: -0.025em; }
+  .cm-gallery-card .cm-text-meme { aspect-ratio: 16 / 9; min-height: 0; border: 1px solid #d8e3ed; border-radius: 14px; padding: 30px 22px; background: #eaf2f9; }
+  .cm-gallery-card .cm-text-meme .cm-meme-type { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 5; overflow: hidden; font-size: 20px; line-height: 1.2; }
+  .cm-gallery-card .cm-text-meme > span { font-size: 8px; }
+  .cm-gallery-card > a:hover { color: #245b89; }
+  .cm-gallery-card > a:hover .cm-image-visual { box-shadow: 0 0 0 2px #99bbd6; }
+}
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
