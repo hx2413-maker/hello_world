@@ -114,7 +114,7 @@ export function ProfileForm({ initialProfile }: { initialProfile: MemberProfile 
             {removeAvatar ? <p className="mt-2 text-xs leading-5 text-slate-500">Your photo will be removed from your profile when you save. Your initials will appear instead.</p> : null}
           </div>
 
-          <p className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-500">Your chosen name and photo appear beside your memes, including ones you’ve already shared. Your email stays private.</p>
+          <p className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-500">Saving makes your chosen name and photo public on your profile, even if you haven’t posted yet, and beside all your memes. Your email stays private.</p>
 
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" disabled={pending || Boolean(imageError) || !changed} className="cm-focus min-h-11 cursor-pointer rounded-lg bg-[#245b89] px-5 text-sm font-bold text-white hover:bg-[#19456c] disabled:cursor-default disabled:opacity-50">{pending ? "Saving…" : "Save changes"}</button>

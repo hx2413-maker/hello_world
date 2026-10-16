@@ -5,18 +5,25 @@ import { Avatar } from "@/components/avatar";
 import { ShareLink } from "./share-link";
 import { VoteControls } from "./vote-controls";
 import { MemeIcon } from "./icons";
+import { DeleteMemeButton } from "./delete-meme-button";
 
 const vibeLabels = { witty: "Witty", poetic: "Poetic", deadpan: "Deadpan" };
 
-export function CaptionCard({ caption, signedIn, featured = false }: { caption: Caption; signedIn: boolean; featured?: boolean }) {
+export function CaptionCard({ caption, signedIn, featured = false, manageOwn = false }: { caption: Caption; signedIn: boolean; featured?: boolean; manageOwn?: boolean }) {
   const date = new Date(caption.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   const sourceLabel = caption.is_starter ? "City Margins starter" : caption.author_name || (caption.is_owner ? "Your meme" : "Community meme");
   return (
     <article className={`cm-card overflow-hidden rounded-2xl ${featured ? "" : "cm-gallery-card"}`} aria-label={`${vibeLabels[caption.vibe]} AI meme`}>
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-4 sm:px-6">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
-          {caption.is_starter ? <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#edf4fa] text-[#5b8fb9]"><MemeIcon name="sparkles" className="h-3.5 w-3.5" /></span> : <Avatar src={caption.author_avatar_url} name={caption.author_name} size={28} />}
-          <span className="min-w-0 max-w-full break-words font-bold text-slate-700">{sourceLabel}</span>{caption.is_owner && caption.author_name && !caption.is_starter ? <span className="rounded bg-[#edf4fa] px-1.5 py-0.5 text-xs font-semibold text-[#456780]">You</span> : null}<span aria-hidden="true" className="text-slate-300">·</span>
+          {caption.author_id && !caption.is_starter ? (
+            <Link href={`/members/${caption.author_id}`} aria-label={`View ${sourceLabel}’s profile`} className="cm-focus flex min-w-0 max-w-full items-center gap-2 rounded-md py-1 hover:text-[#245b89] hover:underline">
+              <Avatar src={caption.author_avatar_url} name={caption.author_name} size={28} />
+              <span className="min-w-0 break-words font-bold">{sourceLabel}</span>
+            </Link>
+          ) : (
+            <><span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#edf4fa] text-[#5b8fb9]"><MemeIcon name="sparkles" className="h-3.5 w-3.5" /></span><span className="min-w-0 max-w-full break-words font-bold text-slate-700">{sourceLabel}</span></>
+          )}{caption.is_owner && !caption.is_starter ? <span className="rounded bg-[#edf4fa] px-1.5 py-0.5 text-xs font-semibold text-[#456780]">You</span> : null}<span aria-hidden="true" className="text-slate-300">·</span>
           <Link href={`/margins/${caption.id}`} className="cm-focus rounded text-slate-500 hover:text-[#245b89]" aria-label={`Open meme from ${date}`}><time dateTime={caption.created_at}>{date}</time></Link>
         </div>
         <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">AI caption · {vibeLabels[caption.vibe]}</span>
@@ -46,6 +53,7 @@ export function CaptionCard({ caption, signedIn, featured = false }: { caption: 
           {!featured ? <Link href={`/margins/${caption.id}`} aria-label={`View meme by ${sourceLabel}`} className="cm-focus inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-bold text-[#245b89] hover:bg-[#edf4fa] hover:underline lg:hidden">View meme <span aria-hidden="true" className="ml-1.5">→</span></Link> : null}
           <ShareLink captionId={caption.id} />
         </div>
+        {signedIn && caption.is_owner && !caption.is_starter && (featured || manageOwn) ? <DeleteMemeButton captionId={caption.id} /> : null}
       </footer>
     </article>
   );

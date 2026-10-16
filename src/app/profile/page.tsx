@@ -7,7 +7,7 @@ import { getMyProfile } from "@/lib/profile";
 import { ProfileForm } from "./profile-form";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Your profile — City Margins", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Edit profile — City Margins", robots: { index: false, follow: false } };
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
@@ -17,10 +17,10 @@ export default async function ProfilePage() {
   return (
     <main className="flex-1 px-4 py-7 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-2xl">
-        <Link href="/margins" className="cm-focus rounded text-xs font-semibold text-[#245b89] hover:underline">← Back to the feed</Link>
+        <Link href={`/members/${user.id}`} className="cm-focus rounded text-xs font-semibold text-[#245b89] hover:underline">← View your public profile</Link>
         <div className="mb-6 mt-6">
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#5c7c98]">Make it yours</p>
-          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-0.045em] text-slate-950 sm:text-4xl">Your profile</h1>
+          <h1 className="mt-2 text-[30px] font-extrabold tracking-[-0.045em] text-slate-950 sm:text-4xl">Edit profile</h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">Give your memes a familiar face and a name.</p>
         </div>
 

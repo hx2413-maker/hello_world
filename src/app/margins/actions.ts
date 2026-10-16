@@ -90,6 +90,7 @@ export async function generateCaption(_previousState: GenerationState, form: For
     return { status: "error", message: "The studio could not be reached. Please try again shortly." };
   }
   revalidatePath("/margins");
+  revalidatePath("/members/[id]", "page");
   redirect(`/margins/${captionId}`);
 }
 
@@ -112,5 +113,6 @@ export async function voteCaption(_previousState: VoteState, form: FormData): Pr
   }
   revalidatePath("/margins");
   revalidatePath(`/margins/${captionId}`);
+  revalidatePath("/members/[id]", "page");
   return { status: "success", message: "Vote saved." };
 }

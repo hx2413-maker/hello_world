@@ -17,7 +17,7 @@ export async function SiteHeader() {
           <Link href="/margins" className="cm-focus hidden rounded-md px-2 py-2 text-sm font-semibold text-slate-600 hover:text-[#245b89] sm:block">Feed</Link>
           <Link href="/create" className="cm-focus inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#b8d1e6] bg-[#edf4fa] px-3 text-xs font-bold text-[#245b89] hover:bg-[#deebf6] sm:px-4 sm:text-sm"><span aria-hidden="true" className="text-lg leading-none">+</span> Create</Link>
           {user ? (
-            <Link href="/profile" aria-label="Your profile" className="cm-focus flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full sm:rounded-lg sm:px-1"><Avatar src={profile?.avatar_url} name={profile?.display_name} size={34} /><span className="hidden text-sm font-semibold text-slate-600 sm:block">Profile</span></Link>
+            <Link href={`/members/${user.id}`} aria-label="Your profile" className="cm-focus flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full sm:rounded-lg sm:px-1"><Avatar src={profile?.avatar_url} name={profile?.display_name} size={34} /><span className="hidden text-sm font-semibold text-slate-600 sm:block">Profile</span></Link>
           ) : (
             <Link href="/login?next=%2Fmargins" className="cm-focus min-h-10 rounded-lg bg-[#245b89] px-3 py-2.5 text-xs font-bold text-white hover:bg-[#19456c] sm:px-4 sm:text-sm">Sign in</Link>
           )}

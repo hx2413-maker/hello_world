@@ -7,6 +7,14 @@ export type MemberProfile = {
   updated_at: string;
 };
 
+export type PublicMember = Omit<MemberProfile, "updated_at"> & {
+  id: string;
+  updated_at: string | null;
+  meme_count: number;
+  total_upvotes: number;
+  is_owner: boolean;
+};
+
 export type ProfileState = {
   status: "idle" | "success" | "error";
   message?: string;

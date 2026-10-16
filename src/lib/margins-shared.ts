@@ -15,6 +15,7 @@ export type Caption = {
   image_path: string | null;
   image_url: string | null;
   author_name: string | null;
+  author_id: string | null;
   author_avatar_path: string | null;
   author_avatar_url: string | null;
   author_updated_at: string | null;
@@ -38,6 +39,7 @@ export type GenerationState = {
   captionId?: string;
 };
 export type VoteState = { status: "idle" | "error" | "success"; message?: string };
+export type DeleteMemeState = { status: "idle" | "error"; message?: string };
 
 const dailyPrompts = [
   { label: "The main character commute", scene: "The 1 train doors closing right as I arrive, already late for a Columbia seminar." },

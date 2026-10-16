@@ -1,6 +1,6 @@
 -- Disposable/local PostgreSQL or Supabase test database only. Storage rows below
 -- are permission fixtures; real files must always be written with Storage API.
--- Run after the image/profile migrations and the Reading Room archive.
+-- Run after all image/profile migrations and the Reading Room archive.
 begin;
 
 create function pg_temp.assert_true(condition boolean, message text)
@@ -32,8 +32,8 @@ from unnest(array[current_setting('test.member_a'), current_setting('test.member
 
 select pg_temp.assert_true((select relrowsecurity from pg_class where oid = 'public.member_profiles'::regclass), 'profiles enforce RLS');
 select pg_temp.assert_true((select not public and file_size_limit = 2097152 and allowed_mime_types = array['image/webp'] from storage.buckets where id = 'member-avatars'), 'avatar bucket is private and bounded');
-select pg_temp.assert_true(not has_schema_privilege('anon', 'city_margins_private', 'USAGE'), 'private helpers cannot be addressed through public schemas');
-select pg_temp.assert_true(not has_function_privilege('service_role', 'public.get_caption_feed(text,integer,integer,uuid)', 'EXECUTE'), 'feed grants remain narrowly scoped');
+select pg_temp.assert_true(not has_schema_privilege('anon', 'city_margins_private', 'CREATE'), 'private helpers cannot be created by public visitors');
+select pg_temp.assert_true(not has_function_privilege('service_role', 'public.get_caption_feed(text,integer,integer,uuid,uuid)', 'EXECUTE'), 'feed grants remain narrowly scoped');
 select pg_temp.assert_true(not has_function_privilege('anon', 'city_margins_private.set_member_profile_updated_at()', 'EXECUTE'), 'timestamp trigger is not a public RPC');
 
 set local role anon;
@@ -84,7 +84,7 @@ select set_config('request.jwt.claim.sub', current_setting('test.member_b'), tru
 select pg_temp.assert_true(not exists(select 1 from public.member_profiles), 'other members cannot read private profile rows');
 with changed as (update public.member_profiles set display_name = 'Hijacked' where id = current_setting('test.member_a')::uuid returning id)
 select pg_temp.assert_true((select count(*) = 0 from changed), 'other members cannot edit a profile');
-select pg_temp.assert_true(not exists(select 1 from storage.objects where name = current_setting('test.avatar_a')), 'unpublished avatar is private');
+select pg_temp.assert_true((select count(*) = 1 from storage.objects where name = current_setting('test.avatar_a')), 'selected public profile avatar is readable before the first post');
 with changed as (update storage.objects set metadata = '{}' where name = current_setting('test.avatar_a') returning id)
 select pg_temp.assert_true((select count(*) = 0 from changed), 'other members cannot replace an unpublished avatar');
 with changed as (delete from storage.objects where name = current_setting('test.avatar_a') returning id)
@@ -125,7 +125,7 @@ select pg_temp.assert_true((select author_name is null and author_avatar_path is
 select pg_temp.assert_true((select id = current_setting('test.member_caption_a')::uuid from public.get_caption_feed('top', 1, 0)), 'top sorting is preserved');
 select pg_temp.assert_true((select count(*) = 1 from public.get_caption_feed('top', 30, 1)), 'pagination is preserved');
 select pg_temp.assert_true((select count(*) = 1 from storage.objects where name = current_setting('test.avatar_a')), 'anonymous readers can fetch the current published avatar');
-select pg_temp.assert_true(not exists(select 1 from storage.objects where name = current_setting('test.avatar_b')), 'profile without published captions does not expose its avatar');
+select pg_temp.assert_true((select count(*) = 1 from storage.objects where name = current_setting('test.avatar_b')), 'profile without published captions exposes only its selected public avatar');
 select pg_temp.expect_sqlstate('select * from public.member_profiles', '42501', 'public author attribution does not allow profile enumeration');
 select pg_temp.expect_sqlstate('select * from public.generation_requests', '42501', 'private prompts remain inaccessible');
 with changed as (update storage.objects set metadata = '{}' where name = current_setting('test.avatar_a') returning id)
