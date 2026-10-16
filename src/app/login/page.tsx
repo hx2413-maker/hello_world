@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { signInWithGoogle } from "@/app/auth/actions";
 import { getCurrentUser } from "@/lib/auth";
 import { AUTH_NEXT_COOKIE, getSafeAuthNext } from "@/lib/auth-next";
-import { MemeIcon } from "../margins/icons";
 
 export const metadata: Metadata = { title: "Sign in | City Margins", description: "Sign in to create AI memes, vote for your favorites, and share the campus chaos." };
 const signInErrors = new Map([["auth", "Your sign-in was interrupted or the link expired. Continue with Google to try again."], ["oauth", "We couldn’t start Google sign-in. Please try again in a moment."]]);
@@ -22,7 +22,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="flex flex-1 items-center justify-center px-5 py-14 sm:py-20">
       <section aria-labelledby="sign-in-heading" className="cm-card w-full max-w-md overflow-hidden rounded-3xl">
         <div className="border-b border-[#d8e5ee] bg-[#e8f1f8] px-8 pb-8 pt-10 text-center">
-          <span aria-hidden="true" className="mx-auto flex h-14 w-14 rotate-[-7deg] items-center justify-center rounded-2xl bg-white text-[#5386af]"><MemeIcon name="sparkles" className="h-7 w-7" /></span>
+          <Image src="/city-margins-mark.png" alt="" width={72} height={72} sizes="72px" loading="eager" className="mx-auto h-18 w-18" />
           <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.17em] text-[#6285a1]">City Margins</p>
           <h1 id="sign-in-heading" className="mt-3 text-3xl font-extrabold leading-tight tracking-[-0.04em] text-[#1b3d58]">Good memes need<br />good company.</h1>
           <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-[#627e93]">Make something funny. Vote for what hits. Send it to the group chat.</p>

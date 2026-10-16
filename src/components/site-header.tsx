@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyProfile } from "@/lib/profile";
 import { Avatar } from "./avatar";
@@ -10,7 +11,7 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:px-6">
       <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between gap-3">
         <Link href="/margins" className="cm-focus flex shrink-0 items-center gap-2 rounded-lg sm:gap-2.5" aria-label="City Margins home">
-          <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#c4d8ec] text-xl font-black text-[#174b7c] sm:h-9 sm:w-9">m<span className="text-white">.</span></span>
+          <Image src="/city-margins-mark.png" alt="" width={40} height={40} sizes="(min-width: 640px) 40px, 36px" loading="eager" className="h-9 w-9 shrink-0 sm:h-10 sm:w-10" />
           <span className="text-base font-extrabold tracking-[-0.055em] text-slate-950 sm:text-[22px]">city margins<span className="text-[#5b8fb9]">.</span></span>
         </Link>
         <nav aria-label="Main navigation" className="flex items-center gap-2 sm:gap-5">
