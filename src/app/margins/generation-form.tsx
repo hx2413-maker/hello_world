@@ -6,14 +6,15 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import type { GenerationState } from "@/lib/margins-shared";
 import { generateCaption } from "./actions";
 import { MemeIcon } from "./icons";
+import { TonePicker } from "./tone-picker";
+import type { SharedTone } from "@/lib/tones-shared";
 
 const initialState: GenerationState = { status: "idle" };
-const voices = [{ value: "witty", label: "Witty" }, { value: "poetic", label: "Poetic" }, { value: "deadpan", label: "Deadpan" }] as const;
 
-export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", initialScene = "" }: { dailyScene: string; dailyLabel?: string; initialScene?: string }) {
-  const [mode, setMode] = useState<"text" | "image">("text");
+export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", initialScene = "", tones = [], userId, initialToneId, initialTone, initialTemplate }: { dailyScene: string; dailyLabel?: string; initialScene?: string; tones?: SharedTone[]; userId?: string; initialToneId?: string; initialTone?: string; initialTemplate?: { id: string; name: string; url: string } }) {
+  const [mode, setMode] = useState<"text" | "image">(initialTemplate ? "image" : "text");
+  const [template, setTemplate] = useState(initialTemplate);
   const [scene, setScene] = useState(initialScene);
-  const [vibe, setVibe] = useState("witty");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [imageError, setImageError] = useState("");
@@ -24,6 +25,8 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
     // native form reset; the same preview still represents the next submission.
     if (mode === "image" && selectedImage) formData.set("image", selectedImage);
     else formData.delete("image");
+    if (mode === "image" && template) formData.set("templateId", template.id);
+    else formData.delete("templateId");
     return generateCaption(previous, formData);
   }, initialState);
 
@@ -34,6 +37,7 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
     previewRef.current = "";
     setPreviewUrl("");
     setSelectedImage(null);
+    setTemplate(undefined);
     setImageError("");
     if (resetInput && fileInput.current) fileInput.current.value = "";
   }
@@ -56,7 +60,7 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
   }
 
   return (
-    <form action={formAction} onSubmit={(event) => { if (imageError || (mode === "image" && !selectedImage)) { event.preventDefault(); setImageError("Choose an image or GIF before generating."); } }} aria-busy={pending}>
+    <form action={formAction} onSubmit={(event) => { if (imageError || (mode === "image" && !selectedImage && !template)) { event.preventDefault(); setImageError("Choose an image or GIF before generating."); } }} aria-busy={pending}>
       <fieldset disabled={pending} className="space-y-6 disabled:opacity-70">
         <legend className="sr-only">Create an AI meme</legend>
         <section aria-labelledby="create-daily-heading" className="rounded-xl border border-[#cbddea] bg-[#edf4fa] p-4 sm:p-5">
@@ -64,8 +68,8 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
           <h2 id="create-daily-heading" className="mt-2 text-base font-bold text-[#254965]">{dailyLabel}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-700">{dailyScene}</p>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-            <p className="text-xs leading-5 text-[#486b87]">A fresh starting point every day. Make it your own.</p>
-            <button type="button" onClick={() => { setMode("text"); clearImage(); setScene(dailyScene); }} className="cm-focus min-h-11 cursor-pointer rounded-lg border border-[#a8c5dd] bg-white px-3 text-xs font-bold text-[#245b89] hover:bg-[#deebf6]">Use this idea</button>
+            <p className="text-xs leading-5 text-[#486b87]">A campus starting point. Make it your own.</p>
+            <button type="button" onClick={() => setScene(dailyScene)} className="cm-focus min-h-11 cursor-pointer rounded-lg border border-[#a8c5dd] bg-white px-3 text-xs font-bold text-[#245b89] hover:bg-[#deebf6]">Use this idea</button>
           </div>
         </section>
 
@@ -77,11 +81,11 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
         {mode === "image" ? (
           <div>
             <label htmlFor="meme-image" className="mb-2 block text-xs font-bold text-slate-700">Upload your image or GIF</label>
-            {previewUrl ? (
+            {previewUrl || template ? (
               <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                <Image src={previewUrl} alt="Preview of your selected upload" width={500} height={400} unoptimized className="h-44 w-full object-contain" />
+                <Image src={previewUrl || template!.url} alt="Preview of your selected upload" width={500} height={400} unoptimized className="h-44 w-full object-contain" />
                 <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white px-3 py-2">
-                  <span className="min-w-0 truncate text-xs text-slate-600">{selectedImage?.name}</span>
+                  <span className="min-w-0 truncate text-xs text-slate-600">{selectedImage?.name ?? template?.name}</span>
                   <button type="button" onClick={() => clearImage()} className="cm-focus min-h-11 shrink-0 cursor-pointer rounded px-1 py-1 text-xs font-semibold text-rose-600 hover:text-rose-800">Remove</button>
                 </div>
               </div>
@@ -92,27 +96,23 @@ export function GenerationForm({ dailyScene, dailyLabel = "Today’s idea", init
                 <span className="mt-1 text-xs text-slate-600">Choose a file below · up to 2 MB</span>
               </label>
             )}
-            <input ref={fileInput} id="meme-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required={!selectedImage} onChange={(event) => chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby="image-help image-error" className="cm-focus block w-full min-w-0 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-600 file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-[#e8f1f8] file:px-2 file:py-1 file:text-xs file:font-semibold file:text-[#245b89]" />
+            <input ref={fileInput} id="meme-image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required={!selectedImage && !template} onChange={(event) => chooseImage(event.target.files?.[0])} aria-invalid={Boolean(imageError)} aria-describedby="image-help image-error" className="cm-focus block w-full min-w-0 rounded-lg border border-slate-200 bg-white p-2 text-xs text-slate-600 file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-[#e8f1f8] file:px-2 file:py-1 file:text-xs file:font-semibold file:text-[#245b89]" />
             <p id="image-help" className="mt-2 text-xs leading-5 text-slate-600">JPEG, PNG, WebP, or GIF · up to 2 MB. GIFs can be up to 15 seconds and 120 frames. GIFs stay animated; AI uses a few frames to find the punchline. Use media you have permission to share.</p>
+            <Link href="/templates" className="cm-focus mt-2 inline-flex min-h-11 items-center rounded text-xs font-bold text-[#245b89] underline underline-offset-4">Browse the meme image library →</Link>
             <p id="image-error" role={imageError ? "alert" : undefined} className="mt-1 text-xs leading-5 text-rose-700">{imageError}</p>
           </div>
         ) : null}
 
         <div>
           <label htmlFor="scene" className="text-xs font-bold text-slate-700">{mode === "image" ? "Add context (optional)" : "What’s the situation?"}</label>
-          <textarea id="scene" name="scene" required={mode === "text"} minLength={mode === "text" ? 10 : undefined} maxLength={280} rows={4} value={scene} onChange={(event) => setScene(event.target.value)} placeholder={mode === "image" ? "Anything AI should know about this image or GIF?" : "Me taking the 1 train one stop because walking counts as cardio."} aria-describedby="scene-count" className="cm-field mt-2 block resize-y px-3 py-2.5 text-base leading-6 disabled:cursor-wait sm:text-sm" />
+          <textarea id="scene" name="scene" required={mode === "text"} minLength={mode === "text" ? 10 : undefined} maxLength={280} rows={4} value={scene} onChange={(event) => setScene(event.target.value)} placeholder={mode === "image" ? "Anything AI should know about this image or GIF?" : "Me opening the syllabus for the first time the night before the midterm."} aria-describedby="scene-count" className="cm-field mt-2 block resize-y px-3 py-2.5 text-base leading-6 disabled:cursor-wait sm:text-sm" />
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-slate-600">{mode === "text" ? "Your own moment, or a spin on today’s idea." : "AI will use what it sees in your upload."}</span>
             <span id="scene-count" className="text-xs tabular-nums text-slate-600">{scene.length}/280{mode === "text" ? " · min. 10" : ""}</span>
           </div>
         </div>
 
-        <fieldset>
-          <legend className="mb-2.5 text-xs font-bold text-slate-700">Choose your energy</legend>
-          <div className="grid grid-cols-3 gap-2">
-            {voices.map((voice) => <label key={voice.value} className={`flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-1 py-2.5 text-xs font-semibold transition-colors ${vibe === voice.value ? "border-[#87b1d1] bg-[#edf4fa] text-[#245b89]" : "border-slate-200 text-slate-600 hover:border-slate-400"}`}><input type="radio" name="vibe" value={voice.value} checked={vibe === voice.value} onChange={() => setVibe(voice.value)} className="cm-focus h-3 w-3 accent-[#245b89]" />{voice.label}</label>)}
-          </div>
-        </fieldset>
+        <TonePicker tones={tones} userId={userId} initialToneId={initialToneId} initialTone={initialTone} />
 
         <button type="submit" disabled={pending || Boolean(imageError)} className="cm-focus flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#245b89] px-4 py-3 text-sm font-bold text-white hover:bg-[#19456c] disabled:cursor-wait disabled:opacity-60"><MemeIcon name="sparkles" className="h-4 w-4" />{pending ? "Making your meme…" : "Generate & publish"}</button>
       </fieldset>

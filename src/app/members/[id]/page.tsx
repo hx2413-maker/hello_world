@@ -11,8 +11,8 @@ import { MemeIcon } from "@/app/margins/icons";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Member profile — City Margins",
-  description: "Explore a creator’s published memes and the upvotes they’ve earned on City Margins.",
+  title: "Member profile — Campus Margins",
+  description: "Explore a creator’s published memes and the upvotes they’ve earned on Campus Margins.",
 };
 
 type Query = { sort?: string | string[]; page?: string | string[]; deleted?: string | string[] };
@@ -44,7 +44,7 @@ export default async function MemberPage({ params, searchParams }: {
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
               <Avatar src={member.avatar_url} name={member.display_name} size={80} />
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#5c7c98]">{member.is_owner ? "Your public profile" : "City Margins creator"}</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#5c7c98]">{member.is_owner ? "Your public profile" : "Campus Margins creator"}</p>
                 <h1 id="member-heading" className="mt-1 break-words text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">{member.display_name}</h1>
                 <p className="mt-1.5 text-sm text-slate-500">A little campus chaos, a lot of personality.</p>
               </div>
@@ -98,7 +98,7 @@ export default async function MemberPage({ params, searchParams }: {
           ) : null}
         </section>
 
-        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500"><span>City Margins · AI captions. Human votes.</span><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy</Link></footer>
+        <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6 text-xs text-slate-500"><span>Campus Margins · AI captions. Human votes.</span><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy</Link></footer>
       </div>
     </main>
   );

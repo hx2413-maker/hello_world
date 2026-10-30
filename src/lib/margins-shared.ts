@@ -4,7 +4,7 @@ export type Vibe = (typeof VIBES)[number];
 export type Caption = {
   id: string;
   body: string;
-  vibe: Vibe;
+  vibe: string;
   created_at: string;
   upvotes: number;
   downvotes: number;
@@ -24,7 +24,7 @@ export type Caption = {
 export type GenerationRequest = {
   id: string;
   scene: string;
-  vibe: Vibe;
+  vibe: string;
   prompt: string;
   system_prompt: string;
   model: string;
@@ -42,20 +42,20 @@ export type VoteState = { status: "idle" | "error" | "success"; message?: string
 export type DeleteMemeState = { status: "idle" | "error"; message?: string };
 
 const dailyPrompts = [
-  { label: "The main character commute", scene: "The 1 train doors closing right as I arrive, already late for a Columbia seminar." },
-  { label: "A very New York budget", scene: "A Columbia student realizing their weekend budget is one bodega coffee." },
-  { label: "Library plot twist", scene: "Going to Butler Library to study, then spending an hour people-watching instead." },
-  { label: "Small-town, big-city energy", scene: "A Midwesterner trying to make friendly eye contact with everyone on Broadway." },
-  { label: "A seat by the river", scene: "Trying to look mysterious by the Hudson while the wind steals my bagel wrapper." },
-  { label: "The weekend side quest", scene: "Setting out to explore downtown and accidentally taking the train in the wrong direction." },
+  { label: "Library plot twist", scene: "Going to Butler Library to study, then spending an hour choosing the perfect seat." },
   { label: "Dorm-room daydreams", scene: "Trying to sleep in a Columbia dorm where someone is always microwaving something." },
   { label: "Dining hall diplomacy", scene: "Strategically timing my dining hall trip around every person I am avoiding on campus." },
-  { label: "Rain check", scene: "Getting caught in NYC rain with an umbrella that immediately turns inside out." },
-  { label: "Sunday reset, allegedly", scene: "Making an ambitious Sunday study plan, then spending the afternoon choosing the perfect cafe." },
+  { label: "The reading will wait", scene: "Opening the Core syllabus and discovering that the optional reading is longer than the required reading." },
+  { label: "Sunday reset, allegedly", scene: "Making an ambitious Sunday study plan, then spending the afternoon reorganizing my dorm desk." },
   { label: "The campus wildlife review", scene: "A campus pigeon looking more prepared for my seminar than I am." },
   { label: "Low effort", scene: "Sharing a tiny patch of sunlight on the Low steps with a bagel and three missed deadlines." },
-  { label: "Subway etiquette", scene: "A Midwesterner politely waiting for everyone to exit the subway while three trains go by." },
-  { label: "Home, in progress", scene: "Walking back to my dorm after a weekend in the city and realizing New York is starting to feel like home." },
+  { label: "Group project energy", scene: "The group project document has five cursors and somehow still has zero words." },
+  { label: "Office hours courage", scene: "Rehearsing my office hours question ten times only to forget it when the professor says hello." },
+  { label: "Laundry day lore", scene: "Setting six timers for the dorm laundry and still arriving after someone moved my clothes." },
+  { label: "Registration roulette", scene: "Building the perfect class schedule and watching every section fill up during registration." },
+  { label: "A Ferris side quest", scene: "Walking into Ferris for a quick lunch and accidentally staying until my next seminar." },
+  { label: "Club fair ambitions", scene: "Signing up for twelve Columbia clubs even though I barely have time for my current classes." },
+  { label: "The seminar nod", scene: "Nodding thoughtfully in a Core seminar while trying to remember which book we are discussing." },
 ];
 
 export function getDailyPrompt(date = new Date()) {

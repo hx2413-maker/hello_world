@@ -8,22 +8,44 @@ import { generateWithGemini, getGenerationConfig } from "@/lib/gemini";
 import { buildPrompt, SYSTEM_PROMPT } from "@/lib/generation-contract";
 import { ImageValidationError, prepareMemeUpload, type MemeUpload } from "@/lib/meme-image";
 import { isUuid, isVibe, validateScene, type GenerationState, type VoteState } from "@/lib/margins-shared";
+import { BUILT_IN_TONES, validateTone, type TonePreference } from "@/lib/tones-shared";
+import { getTemplateUpload } from "@/lib/meme-templates";
 
 export async function generateCaption(_previousState: GenerationState, form: FormData): Promise<GenerationState> {
   let captionId: string;
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { status: "error", message: "Sign in before generating a caption." };
+    if (authError || !user || user.is_anonymous) return { status: "error", message: "Sign in before generating a caption." };
     const upload = form.get("image");
-    const imageFile = upload instanceof File && upload.size > 0 ? upload : null;
+    let imageFile = upload instanceof File && upload.size > 0 ? upload : null;
     if (upload !== null && !(upload instanceof File)) return { status: "error", message: "Choose a valid image file." };
+    const templateId = form.get("templateId");
+    if (templateId) {
+      if (typeof templateId !== "string" || templateId.length > 80 || imageFile) return { status: "error", message: "Choose either a template or your own upload." };
+      imageFile = await getTemplateUpload(templateId);
+      if (!imageFile) return { status: "error", message: "This template is no longer available. Choose another from the image library." };
+    }
     const context = form.get("scene");
     const scene = imageFile && typeof context === "string" && context.trim().length <= 280
       ? (context.trim() ? (context.trim().length < 10 ? `Image context: ${context.trim()}` : context.trim()) : "Use the uploaded image as the scene.")
       : validateScene(context);
-    const vibe = form.get("vibe");
-    if (!scene || !isVibe(vibe)) return { status: "error", message: "Describe your scene in 10–280 characters and choose a tone." };
+    let tone: TonePreference | null = null;
+    const selection = form.get("vibe");
+    const toneId = form.get("toneId");
+    if (toneId) {
+      if (!isUuid(toneId)) return { status: "error", message: "Choose an available community tone." };
+      const { data, error } = await supabase.from("shared_tones").select("name, instructions").eq("id", toneId).maybeSingle();
+      if (error || !data) return { status: "error", message: "This community tone was removed. Choose another tone or describe your own." };
+      tone = validateTone(data.name, data.instructions);
+    } else if (selection === "custom") {
+      tone = validateTone(form.get("toneName"), form.get("toneInstructions"));
+    } else if (isVibe(selection)) {
+      const builtIn = BUILT_IN_TONES.find((item) => item.name === selection)!;
+      tone = { name: builtIn.name, instructions: builtIn.instructions };
+    }
+    if (!scene || !tone) return { status: "error", message: "Describe your scene in 10–280 characters and choose a tone. Custom tones need a 2–40 character name and 10–400 character style description." };
+    const vibe = tone.name;
 
     const config = getGenerationConfig();
     const writer = createGenerationWriter();
@@ -36,7 +58,7 @@ export async function generateCaption(_previousState: GenerationState, form: For
       }
     }
     const imagePath = image ? `${user.id}/${crypto.randomUUID()}.webp` : null;
-    const prompt = buildPrompt(scene, vibe, Boolean(image)) + (image?.animated
+    const prompt = buildPrompt(scene, vibe, Boolean(image), tone.instructions) + (image?.animated
       ? `\nThe ${image.frames.length} attached images are sampled frames from one animation, in chronological order. Base the joke on visible details across these frames; do not invent unseen motion.`
       : "");
     const params = { p_scene: scene, p_vibe: vibe, p_prompt: prompt, p_system_prompt: SYSTEM_PROMPT, p_model: config.model };

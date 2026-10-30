@@ -8,8 +8,8 @@ import { CaptionCard } from "../caption-card";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export const metadata: Metadata = {
-  title: "One for the group chat | City Margins",
-  description: "An AI meme from City Margins. Vote, share, and make your own.",
+  title: "One for the group chat | Campus Margins",
+  description: "An AI meme from Campus Margins. Vote, share, and make your own.",
 };
 
 export default async function CaptionPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,7 +50,7 @@ export default async function CaptionPage({ params }: { params: Promise<{ id: st
           <div><h2 className="text-base font-bold tracking-tight text-[#254965]">Your camera roll has potential.</h2><p className="mt-1 text-xs text-[#68839a]">Turn a photo or a thought into the next good one.</p></div>
           <Link href="/create" className="cm-focus rounded-lg bg-[#245b89] px-4 py-3 text-xs font-bold text-white hover:bg-[#19456c]">Make a meme →</Link>
         </section>
-        <footer className="mt-7 flex justify-between text-[10px] text-slate-400"><span>City Margins</span><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy</Link></footer>
+        <footer className="mt-7 flex justify-between text-[10px] text-slate-400"><span>Campus Margins</span><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy</Link></footer>
       </div>
     </main>
   );

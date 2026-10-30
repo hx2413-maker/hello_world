@@ -7,7 +7,7 @@ import { getMyProfile } from "@/lib/profile";
 import { ProfileForm } from "./profile-form";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Edit profile — City Margins", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Edit profile — Campus Margins", robots: { index: false, follow: false } };
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
@@ -38,7 +38,7 @@ export default async function ProfilePage() {
             <form action={signOut}><button type="submit" className="cm-focus min-h-11 cursor-pointer rounded-lg border border-slate-200 px-4 text-xs font-bold text-slate-600 hover:border-slate-400 hover:text-slate-900">Sign out</button></form>
           </div>
         </section>
-        <p className="mt-5 text-center text-xs text-slate-400"><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy at City Margins</Link></p>
+        <p className="mt-5 text-center text-xs text-slate-400"><Link href="/privacy" className="cm-focus rounded hover:text-[#245b89]">Privacy at Campus Margins</Link></p>
       </div>
     </main>
   );

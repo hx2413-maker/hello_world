@@ -1,0 +1,20 @@
+# Campus helper and guest practice
+
+The authenticated helper uses AI SDK 7 `ToolLoopAgent` with the existing Gemini server configuration. Its only tools offer allowlisted local navigation or prepare a 10–280-character scene and a built-in tone. Tools never publish, delete, vote, edit an account, or fetch a model-provided URL. Each proposed meme has an explicit **Generate & publish** button using the existing authenticated `generateCaption` server action, so the regular quota, RLS, prompt storage, and publication checks still apply. **Edit in studio** preserves the scene and tone and supports images and community tones.
+
+The helper accepts at most eight plain user/assistant messages, each at most 600 characters, with a bounded 10 KB request body. No client-supplied system messages or tool executions are admitted. Two model steps, 400 output tokens per step, no automatic retries, and a 25-second timeout bound each request. Chat text is kept only in the current page state and sent to Gemini; the private database request log stores account ID and timestamp without the conversation. Signed-out visitors get navigation links and the practice page, without invoking the model.
+
+The `/demo` page uses three published AI captions for local practice votes; if the feed is unavailable, clearly labeled authored sample captions preserve the walkthrough. Practice ratings never call the voting API and never alter community scores. Guest creation requires one uploaded image or GIF and produces a private Gemini caption. The existing decoder validates MIME signatures, dimensions, decoded pixels, animation duration, and file size. Images are processed in memory and sent to Gemini; they are never uploaded to Supabase Storage or published to the feed. The exact prompt, system prompt, model, caption, and status are retained in a server-only audit table.
+
+## Quotas and privacy
+
+- `CAMPUS_GUEST_SECRET` is a separate server-only random secret of at least 32 characters. It signs a random guest UUID in the `campus_demo` cookie. The cookie is HttpOnly, Secure in production, SameSite Strict, scoped to `/`, and has a one-year maximum age.
+- Database identity keys are domain-separated HMAC hashes of the guest UUID and network address. Raw network addresses and cookie tokens are not stored. Vercel's edge-provided forwarding header supplies the production IP; local development uses one fixed network identity.
+- A guest may reserve one generation attempt per cookie identity. The network limit is three attempts per UTC day and the shared limit is 20. A cheap preflight checks all three before reading/decoding the image; the atomic reservation rechecks under an advisory transaction lock before calling Gemini. Invalid uploads do not consume the AI allowance. Provider failures do consume a reserved attempt.
+- Clearing cookies or switching devices creates a new browser identity, so the network and global caps also apply. These limits are spending controls, not proof of a unique human visitor.
+- Assistant requests are limited to 20 per account and 100 shared per UTC day. Account deletion clears its ID but preserves the spent global quota record. The assistant allowance does not replace or extend the existing published-generation allowance.
+- Metering and guest preview records are retained privately for quota enforcement and diagnostics. They are not accessible to anonymous or authenticated app clients. The new public RPCs are `SECURITY INVOKER` and executable only by `service_role`; both underlying private tables have RLS enabled.
+
+## Verification
+
+`tests/campus-assistant.test.mjs` covers privileged-message rejection, bounded conversation input, safe route/action construction, cookie tampering, and hashed network keys. `supabase/tests/campus_assistant_demo_limits.sql` checks SQL grants, RLS, single use, network/global budgets, idempotent completion, retained spending after account deletion, and isolation from public captions/votes using rollback-only fixtures. A live Gemini smoke request confirmed the SDK returned an allowlisted `/templates` navigation tool result.

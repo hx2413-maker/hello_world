@@ -7,13 +7,13 @@ import { VoteControls } from "./vote-controls";
 import { MemeIcon } from "./icons";
 import { DeleteMemeButton } from "./delete-meme-button";
 
-const vibeLabels = { witty: "Witty", poetic: "Poetic", deadpan: "Deadpan" };
+const vibeLabels: Record<string, string> = { witty: "Witty", poetic: "Poetic", deadpan: "Deadpan" };
 
 export function CaptionCard({ caption, signedIn, featured = false, manageOwn = false }: { caption: Caption; signedIn: boolean; featured?: boolean; manageOwn?: boolean }) {
   const date = new Date(caption.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-  const sourceLabel = caption.is_starter ? "City Margins starter" : caption.author_name || (caption.is_owner ? "Your meme" : "Community meme");
+  const sourceLabel = caption.is_starter ? "Campus Margins starter" : caption.author_name || (caption.is_owner ? "Your meme" : "Community meme");
   return (
-    <article className={`cm-card overflow-hidden rounded-2xl ${featured ? "" : "cm-gallery-card"}`} aria-label={`${vibeLabels[caption.vibe]} AI meme`}>
+    <article className={`cm-card overflow-hidden rounded-2xl ${featured ? "" : "cm-gallery-card"}`} aria-label={`${(vibeLabels[caption.vibe] ?? caption.vibe)} AI meme`}>
       <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-4 sm:px-6">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
           {caption.author_id && !caption.is_starter ? (
@@ -26,7 +26,7 @@ export function CaptionCard({ caption, signedIn, featured = false, manageOwn = f
           )}{caption.is_owner && !caption.is_starter ? <span className="rounded bg-[#edf4fa] px-1.5 py-0.5 text-xs font-semibold text-[#456780]">You</span> : null}<span aria-hidden="true" className="text-slate-300">·</span>
           <Link href={`/margins/${caption.id}`} className="cm-focus rounded text-slate-500 hover:text-[#245b89]" aria-label={`Open meme from ${date}`}><time dateTime={caption.created_at}>{date}</time></Link>
         </div>
-        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">AI caption · {vibeLabels[caption.vibe]}</span>
+        <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">AI caption · {(vibeLabels[caption.vibe] ?? caption.vibe)}</span>
       </header>
 
       {caption.image_url ? (
@@ -38,7 +38,7 @@ export function CaptionCard({ caption, signedIn, featured = false, manageOwn = f
         <Link href={`/margins/${caption.id}`} className="cm-focus cm-text-meme relative flex min-h-64 items-center justify-center overflow-hidden border-y border-slate-100 bg-[#f5f8fb] px-7 py-12 sm:min-h-72 sm:px-12" aria-label={`Open meme: ${caption.body}`}>
           <span aria-hidden="true" className="absolute left-5 top-4 text-[10px] font-bold uppercase tracking-[0.15em] text-[#7999b5]">Campus life. Meme material.</span>
           <p className={`cm-meme-type whitespace-pre-wrap break-words text-center leading-[1.18] text-[#182c40] ${featured ? "text-3xl sm:text-5xl" : "text-[28px] sm:text-[36px]"}`}>{caption.body}</p>
-          {caption.image_path ? <p className="absolute inset-x-5 bottom-3 text-center text-xs text-slate-600">Image unavailable right now. Refresh to try again.</p> : <span aria-hidden="true" className="absolute bottom-4 right-5 text-[10px] font-bold tracking-tight text-[#8ca9c0]">city margins.</span>}
+          {caption.image_path ? <p className="absolute inset-x-5 bottom-3 text-center text-xs text-slate-600">Image unavailable right now. Refresh to try again.</p> : <span aria-hidden="true" className="absolute bottom-4 right-5 text-[10px] font-bold tracking-tight text-[#8ca9c0]">campus margins.</span>}
         </Link>
       )}
 
