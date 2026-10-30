@@ -1,5 +1,25 @@
 export type MemeTemplate = { id: string; name: string; url: string; width: number; height: number };
 export type CampusStory = { title: string; url: string; publishedAt: string; category: string };
+export type PublicHoliday = { name: string; date: string };
+
+export function parseUpcomingHolidays(value: unknown, now = new Date()): PublicHoliday[] {
+  if (!Array.isArray(value)) return [];
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+  const seen = new Set<string>();
+  return value.slice(0, 100).flatMap((item: unknown) => {
+    if (!item || typeof item !== "object") return [];
+    const raw = item as Record<string, unknown>;
+    const date = typeof raw.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.date) ? raw.date : "";
+    const timestamp = Date.parse(`${date}T12:00:00Z`);
+    const name = plainSourceText(raw.localName ?? raw.name, 60);
+    const appliesInNewYork = raw.global === true || (Array.isArray(raw.counties) && raw.counties.includes("US-NY"));
+    if (!name || raw.countryCode !== "US" || !appliesInNewYork || !Array.isArray(raw.types) || !raw.types.includes("Public")
+      || !Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== date
+      || date < today || timestamp > now.getTime() + 93 * 86_400_000 || seen.has(date)) return [];
+    seen.add(date);
+    return [{ name, date }];
+  }).sort((a, b) => a.date.localeCompare(b.date));
+}
 
 export function plainSourceText(value: unknown, maxLength: number): string {
   if (typeof value !== "string") return "";

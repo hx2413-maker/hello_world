@@ -22,7 +22,8 @@ export async function GET(request: Request) {
   if (source === "news") {
     revalidateTag(CAMPUS_NEWS_CACHE_TAG, { expire: 0 });
     const { prompt, diagnostics } = await getCampusNewsResult(10_000);
-    return Response.json({ source, ok: prompt.kind === "news", kind: prompt.kind, fetchedAt: prompt.fetchedAt ?? null, diagnostics }, { status: prompt.kind === "news" ? 200 : 502, headers: { "Cache-Control": "no-store" } });
+    const ok = prompt.kind !== "fallback";
+    return Response.json({ source, ok, kind: prompt.kind, fetchedAt: prompt.fetchedAt ?? null, diagnostics }, { status: ok ? 200 : 502, headers: { "Cache-Control": "no-store" } });
   }
   return Response.json({ error: "Choose news or templates." }, { status: 400 });
 }

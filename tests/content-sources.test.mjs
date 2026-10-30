@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { imageMimeFromBytes, parseCampusNews, parseMemeTemplates, plainSourceText, readBoundedBody, safeCampusNewsUrl, safeTemplateUrl } from "../src/lib/content-sources.ts";
+import { imageMimeFromBytes, parseCampusNews, parseMemeTemplates, parseUpcomingHolidays, plainSourceText, readBoundedBody, safeCampusNewsUrl, safeTemplateUrl } from "../src/lib/content-sources.ts";
 
 test("template catalog rejects unexpected URLs, duplicate IDs, bad dimensions, and unbounded labels", () => {
   const good = { id: "181913649", name: "Drake &amp; Friends", url: "https://i.imgflip.com/30b1gx.jpg", width: 1200, height: 1200 };
@@ -54,4 +54,26 @@ test("image signature must match an actual supported raster format", () => {
   assert.equal(imageMimeFromBytes(new TextEncoder().encode('<svg width="500">')), null);
   assert.equal(imageMimeFromBytes(new TextEncoder().encode("GIF89a123456789")), "image/gif");
   assert.equal(imageMimeFromBytes(new TextEncoder().encode("RIFF1234WEBPextra")), "image/webp");
+});
+
+test("holiday fallback selects dated US public holidays applicable to New York", () => {
+  const base = { date: "2026-11-11", localName: "Veterans Day", countryCode: "US", global: true, counties: null, types: ["Public", "Bank"] };
+  const parsed = parseUpcomingHolidays([base, base,
+    { ...base, date: "2026-10-01" },
+    { ...base, date: "2026-11-02", countryCode: "CA" },
+    { ...base, date: "2026-11-03", global: false, counties: ["US-TX"] },
+    { ...base, date: "2026-11-04", types: ["Bank"] },
+    { ...base, date: "2026-02-30" },
+    { ...base, date: "2027-09-01" },
+    { ...base, date: "2026-11-26", localName: "Thanksgiving Day" },
+  ], new Date("2026-10-30T15:00:00Z"));
+  assert.deepEqual(parsed, [{ name: "Veterans Day", date: "2026-11-11" }, { name: "Thanksgiving Day", date: "2026-11-26" }]);
+  assert.deepEqual(parseUpcomingHolidays({ error: "unavailable" }), []);
+});
+
+test("holiday dates use New York's current day and allow the year rollover", () => {
+  const holiday = { date: "2027-01-01", localName: "New Year's Day", countryCode: "US", global: true, types: ["Public"] };
+  assert.deepEqual(parseUpcomingHolidays([holiday], new Date("2026-12-30T15:00:00Z")), [{ name: "New Year's Day", date: "2027-01-01" }]);
+  assert.equal(parseUpcomingHolidays([holiday], new Date("2027-01-02T02:00:00Z")).length, 1);
+  assert.equal(parseUpcomingHolidays([holiday], new Date("2027-01-02T06:00:00Z")).length, 0);
 });

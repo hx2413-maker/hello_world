@@ -37,7 +37,7 @@ export default async function MarginsPage({ searchParams }: { searchParams: Prom
 
         <section aria-labelledby="daily-prompt-heading" className="mb-7 flex flex-col gap-4 rounded-2xl border border-[#d7e4ee] bg-[#eaf2f8] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="min-w-0">
-            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#486b87]"><MemeIcon name="bolt" className="h-4 w-4" />{daily.kind === "news" ? "Campus news → meme inspiration" : daily.kind === "holiday" ? "On the campus calendar" : "Today’s campus idea"}</p>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#486b87]"><MemeIcon name="bolt" className="h-4 w-4" />{daily.kind === "news" ? "Campus news → meme inspiration" : daily.kind === "holiday" ? "Holiday → campus inspiration" : "Today’s campus idea"}</p>
             <h2 id="daily-prompt-heading" className="mt-2 text-lg font-bold tracking-tight text-[#254965]">{daily.label}</h2>
             <p className="mt-1 text-sm leading-6 text-[#48647a]">{daily.scene}</p>
             {daily.sourceUrl ? <p className="mt-2 text-xs text-slate-600"><a href={daily.sourceUrl} target="_blank" rel="noopener noreferrer" className="cm-focus rounded underline underline-offset-4">{daily.sourceTitle ?? "Read the source"} ↗</a>{daily.publishedAt ? <span> · {new Date(daily.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })}</span> : null}</p> : <p className="mt-2 text-xs text-slate-500">A campus classic while fresh news is unavailable.</p>}

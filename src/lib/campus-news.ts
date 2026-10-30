@@ -1,5 +1,5 @@
 import "server-only";
-import { parseCampusNews, readBoundedBody, sourceFetchedAt } from "./content-sources";
+import { parseCampusNews, parseUpcomingHolidays, readBoundedBody, sourceFetchedAt } from "./content-sources";
 import { getDailyPrompt } from "./margins-shared";
 
 export const CAMPUS_NEWS_CACHE_TAG = "campus-news";
@@ -9,14 +9,18 @@ export type CampusPrompt = {
 };
 
 type NewsDiagnostics = {
+  provider: "columbia-news" | "nager-holidays";
   outcome: "ok" | "upstream_status" | "unexpected_type" | "no_recent_stories" | "no_campus_stories" | "timeout" | "fetch_error" | "invalid_content";
   upstreamStatus?: number; contentType?: string; fetchedAt?: string;
   bytes?: number; storyCount?: number; elapsedMs: number; errorCode?: string;
+  alternate?: NewsDiagnostics;
 };
 
-export async function getCampusNewsResult(timeoutMs = 3500): Promise<{ prompt: CampusPrompt; diagnostics: NewsDiagnostics }> {
+type CampusNewsResult = { prompt: CampusPrompt; diagnostics: NewsDiagnostics };
+
+async function getColumbiaNewsResult(timeoutMs: number): Promise<CampusNewsResult> {
   const started = Date.now();
-  const diagnostics: NewsDiagnostics = { outcome: "fetch_error", elapsedMs: 0 };
+  const diagnostics: NewsDiagnostics = { provider: "columbia-news", outcome: "fetch_error", elapsedMs: 0 };
   const fallback = () => ({ prompt: { ...getDailyPrompt(), kind: "fallback" as const }, diagnostics: { ...diagnostics, elapsedMs: Date.now() - started } });
   try {
     const response = await fetch("https://news.columbia.edu/", {
@@ -53,6 +57,63 @@ export async function getCampusNewsResult(timeoutMs = 3500): Promise<{ prompt: C
     }
     return fallback();
   }
+}
+
+async function getHolidayResult(timeoutMs: number): Promise<CampusNewsResult> {
+  const started = Date.now();
+  const now = new Date();
+  const year = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric" }).format(now));
+  const diagnostics: NewsDiagnostics = { provider: "nager-holidays", outcome: "fetch_error", elapsedMs: 0 };
+  const fallback = () => ({ prompt: { ...getDailyPrompt(), kind: "fallback" as const }, diagnostics: { ...diagnostics, elapsedMs: Date.now() - started } });
+  try {
+    // The next year is only needed for the late-December rollover. Both requests
+    // are public API reads, cached with the same daily refresh tag.
+    const years = now.getUTCMonth() === 11 ? [year, year + 1] : [year];
+    const batches = await Promise.all(years.map(async (calendarYear) => {
+      const response = await fetch(`https://nagerholidays.com/api/v3/publicholidays/${calendarYear}/US`, {
+        cache: "force-cache", next: { revalidate: 6 * 3600, tags: [CAMPUS_NEWS_CACHE_TAG] },
+        signal: AbortSignal.timeout(Math.min(10_000, Math.max(1000, timeoutMs))), redirect: "error",
+        headers: { Accept: "application/json" },
+      });
+      diagnostics.upstreamStatus = response.status;
+      diagnostics.contentType = response.headers.get("content-type")?.slice(0, 100);
+      diagnostics.fetchedAt = sourceFetchedAt(response) ?? undefined;
+      if (!response.ok) { diagnostics.outcome = "upstream_status"; await response.body?.cancel(); throw new Error("Holiday provider unavailable."); }
+      if (!diagnostics.contentType?.includes("application/json")) { diagnostics.outcome = "unexpected_type"; await response.body?.cancel(); throw new Error("Unexpected holiday format."); }
+      diagnostics.outcome = "invalid_content";
+      const body = await readBoundedBody(response, 50_000);
+      diagnostics.bytes = (diagnostics.bytes ?? 0) + body.byteLength;
+      return parseUpcomingHolidays(JSON.parse(new TextDecoder().decode(body)), now);
+    }));
+    const holidays = batches.flat().sort((a, b) => a.date.localeCompare(b.date));
+    diagnostics.storyCount = holidays.length;
+    const holiday = holidays[0];
+    if (!holiday) { diagnostics.outcome = "no_recent_stories"; return fallback(); }
+    const holidayDate = `${holiday.date}T12:00:00.000Z`;
+    const displayDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" }).format(new Date(holidayDate));
+    return {
+      prompt: {
+        label: `Holiday idea: ${holiday.name}`,
+        scene: `${holiday.name} is on ${displayDate}. A Columbia student balances holiday plans with their Butler reading pile. Make the joke about student procrastination; do not imply Columbia cancels classes.`,
+        sourceTitle: "U.S. holiday calendar · Nager.Date (not Columbia’s class schedule)",
+        sourceUrl: `https://nagerholidays.com/publicholiday/united-states/${holiday.date.slice(0, 4)}`,
+        publishedAt: holidayDate, fetchedAt: diagnostics.fetchedAt, kind: "holiday",
+      },
+      diagnostics: { ...diagnostics, outcome: "ok", elapsedMs: Date.now() - started },
+    };
+  } catch (error) {
+    if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) diagnostics.outcome = "timeout";
+    return fallback();
+  }
+}
+
+export async function getCampusNewsResult(timeoutMs = 3500): Promise<CampusNewsResult> {
+  // Fetch independent public sources in parallel, keeping a cold page within
+  // one bounded timeout. A denied news request is not retried or circumvented.
+  const [news, holiday] = await Promise.all([getColumbiaNewsResult(timeoutMs), getHolidayResult(timeoutMs)]);
+  if (news.prompt.kind === "news") return news;
+  if (holiday.prompt.kind === "holiday") return { ...holiday, diagnostics: { ...holiday.diagnostics, alternate: news.diagnostics } };
+  return { ...news, diagnostics: { ...news.diagnostics, alternate: holiday.diagnostics } };
 }
 
 export async function getCampusPrompt(): Promise<CampusPrompt> {
