@@ -33,6 +33,16 @@ test("source text strips control characters and handles bad numeric entities saf
   assert.equal(plainSourceText("x".repeat(500), 80).length, 80);
 });
 
+test("dated official article teasers survive a changed highlight script without executing markup", () => {
+  const now = new Date("2026-10-30T15:00:00Z");
+  const article = (url, date, title) => `<article about="${url}" typeof="schema:Article"><div class="field field--name-field-cu-date field--type-datetime">${date}</div><h2><a href="${url}" rel="bookmark"><span property="schema:name">${title}</span></a></h2></article>`;
+  const html = '<script>var highlights_data = [notJSON];</script>'
+    + article("/news/campus-day", "October 29, 2026", "Campus &amp; Community Day")
+    + article("https://evil.test/news/campus", "October 29, 2026", "Wrong origin")
+    + article("/news/stale", "January 1, 2025", "Old story");
+  assert.deepEqual(parseCampusNews(html, now), [{ title: "Campus & Community Day", url: "https://news.columbia.edu/news/campus-day", publishedAt: "2026-10-29T12:00:00.000Z", category: "Campus News" }]);
+});
+
 test("bounded response reader rejects both declared and streamed oversized bodies", async () => {
   await assert.rejects(readBoundedBody(new Response("abc", { headers: { "content-length": "9999999" } }), 10), /size limit/);
   const streaming = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array(6)); controller.enqueue(new Uint8Array(6)); controller.close(); } });

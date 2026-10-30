@@ -59,12 +59,13 @@ export function parseCampusNews(html: string, now = new Date()): CampusStory[] {
   // Columbia publishes this JSON array for its news highlights. Parse data only;
   // never run the surrounding script or interpret article text as instructions.
   const match = html.match(/\b(?:var|let|const)\s+highlights_data\s*=\s*(\[[\s\S]*?\]);/);
-  if (!match || match[1].length > 300_000) return [];
-  let data: unknown;
-  try { data = JSON.parse(match[1]); } catch { return []; }
-  if (!Array.isArray(data)) return [];
+  let data: unknown = [];
+  if (match && match[1].length <= 300_000) {
+    try { data = JSON.parse(match[1]); } catch { /* Try the dated article teasers below. */ }
+  }
+  if (!Array.isArray(data)) data = [];
   const seen = new Set<string>();
-  return data.slice(0, 100).flatMap((item: unknown) => {
+  const stories = (data as unknown[]).slice(0, 100).flatMap((item: unknown) => {
     if (!item || typeof item !== "object") return [];
     const raw = item as Record<string, unknown>;
     const title = plainSourceText(raw.label, 160);
@@ -75,7 +76,28 @@ export function parseCampusNews(html: string, now = new Date()): CampusStory[] {
       || timestamp > now.getTime() + 3_600_000 || timestamp < now.getTime() - 21 * 86_400_000) return [];
     seen.add(url);
     return [{ title, url, publishedAt: new Date(timestamp).toISOString(), category: plainSourceText(raw.category, 60) }];
-  }).sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  });
+  // The same official homepage also exposes dated schema:Article teasers.
+  // Keep this independent of its JavaScript highlight format so a CMS change
+  // does not hide otherwise available recent campus news.
+  const articlePattern = /<article\b[^>]*\btypeof=["']schema:Article["'][^>]*>([\s\S]*?)<\/article>/gi;
+  for (const article of html.matchAll(articlePattern)) {
+    const content = article[1];
+    const href = content.match(/<a\b[^>]*\bhref=["']([^"']+)["'][^>]*\brel=["']bookmark["']/i)?.[1];
+    const rawTitle = content.match(/<span\b[^>]*\bproperty=["']schema:name["'][^>]*>([\s\S]*?)<\/span>/i)?.[1];
+    const rawDate = content.match(/<div\b[^>]*class=["'][^"']*field--name-field-cu-date[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1];
+    const url = safeCampusNewsUrl(href);
+    const title = plainSourceText(rawTitle, 160);
+    const date = plainSourceText(rawDate, 60);
+    // Teasers publish a calendar date, not a time. Noon UTC keeps the displayed
+    // date stable in New York and does not depend on the server's time zone.
+    const timestamp = /^[A-Za-z]+ \d{1,2}, \d{4}$/.test(date) ? Date.parse(`${date} 12:00:00 GMT`) : NaN;
+    if (!title || !url || seen.has(url) || !Number.isFinite(timestamp)
+      || timestamp > now.getTime() + 3_600_000 || timestamp < now.getTime() - 21 * 86_400_000) continue;
+    seen.add(url);
+    stories.push({ title, url, publishedAt: new Date(timestamp).toISOString(), category: "Campus News" });
+  }
+  return stories.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt)).slice(0, 100);
 }
 
 export async function readBoundedBody(response: Response, maxBytes: number): Promise<Uint8Array> {

@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
-import { CAMPUS_NEWS_CACHE_TAG, getCampusPrompt } from "@/lib/campus-news";
+import { CAMPUS_NEWS_CACHE_TAG, getCampusNewsResult } from "@/lib/campus-news";
 import { getMemeTemplates, TEMPLATE_CACHE_TAG } from "@/lib/meme-templates";
 
 export const runtime = "nodejs";
@@ -21,8 +21,8 @@ export async function GET(request: Request) {
   }
   if (source === "news") {
     revalidateTag(CAMPUS_NEWS_CACHE_TAG, { expire: 0 });
-    const result = await getCampusPrompt();
-    return Response.json({ source, ok: result.kind === "news", kind: result.kind, fetchedAt: result.fetchedAt ?? null }, { status: result.kind === "news" ? 200 : 502 });
+    const { prompt, diagnostics } = await getCampusNewsResult(10_000);
+    return Response.json({ source, ok: prompt.kind === "news", kind: prompt.kind, fetchedAt: prompt.fetchedAt ?? null, diagnostics }, { status: prompt.kind === "news" ? 200 : 502, headers: { "Cache-Control": "no-store" } });
   }
   return Response.json({ error: "Choose news or templates." }, { status: 400 });
 }

@@ -3,7 +3,7 @@ import { isStepCount, jsonSchema, tool, ToolLoopAgent } from "ai";
 import { getCurrentUser } from "@/lib/auth";
 import { getGenerationConfig } from "@/lib/gemini";
 import { createAiUsageWriter, isSameOrigin, readBoundedBody } from "@/lib/ai-usage";
-import { ASSISTANT_DESTINATIONS, memeAction, navigationAction, parseAssistantMessages, type AssistantAction, type AssistantDestination, type AssistantTone } from "@/lib/assistant-contract";
+import { ASSISTANT_DESTINATIONS, assistantReplyText, memeAction, navigationAction, parseAssistantMessages, type AssistantAction, type AssistantDestination, type AssistantTone } from "@/lib/assistant-contract";
 
 export const runtime = "nodejs";
 export const maxDuration = 40;
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       },
     });
     const result = await agent.generate({ messages, abortSignal: AbortSignal.timeout(25_000) });
-    return Response.json({ message: result.text.trim().slice(0, 600) || (actions.length ? "Here’s the next step. Review it below." : "Tell me what you’d like to do on campus today."), actions }, { headers: { "Cache-Control": "no-store" } });
+    return Response.json({ message: assistantReplyText(result.text, actions), actions }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return Response.json({ error: "The assistant couldn’t reply just now. Try again later, or use the feed and studio directly." }, { status: 503 });
   }

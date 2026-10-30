@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { memeAction, navigationAction, parseAssistantMessages } from "../src/lib/assistant-contract.ts";
+import { assistantReplyText, memeAction, navigationAction, parseAssistantMessages } from "../src/lib/assistant-contract.ts";
 import { createDemoIdentity, privateDemoHash, verifyDemoIdentity } from "../src/lib/demo-identity.ts";
 
 const userId = "aefb17db-f7ad-4e13-a493-0ced72140c4c";
+
+test("tool replies never claim navigation or publication before the user acts", () => {
+  const navigation = navigationAction("templates", userId);
+  const proposal = memeAction("My group project has five cursors and zero words.", "witty");
+  assert.equal(assistantReplyText("I have opened the templates page for you.", [navigation]), "Choose a link below to open that page.");
+  assert.equal(assistantReplyText("Your meme is already published!", [proposal]), "Here’s a campus meme idea. Review it, then choose Generate & publish, or edit it in the studio.");
+  assert.equal(assistantReplyText("I opened and published it.", [navigation, proposal]), assistantReplyText("", [proposal]));
+  assert.equal(assistantReplyText("  Tap again to undo a vote.  ", []), "Tap again to undo a vote.");
+  assert.equal(assistantReplyText("x".repeat(601), []).length, 600);
+});
 
 test("assistant accepts bounded user/assistant text only, never privileged or arbitrary tool messages", () => {
   assert.deepEqual(parseAssistantMessages([{ role: "user", content: "  Help me make a meme  " }]), [{ role: "user", content: "Help me make a meme" }]);

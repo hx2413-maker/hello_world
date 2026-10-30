@@ -6,6 +6,17 @@ export type AssistantAction =
   | { kind: "generate"; scene: string; tone: AssistantTone; href: string };
 export type AssistantMessage = { role: "user" | "assistant"; content: string };
 
+/** Tool actions describe available next steps; no navigation/publication occurs
+ * until the user clicks. Keep that status truthful regardless of model wording.
+ */
+export function assistantReplyText(modelText: string, actions: AssistantAction[]): string {
+  if (actions.some((action) => action.kind === "generate")) {
+    return "Here’s a campus meme idea. Review it, then choose Generate & publish, or edit it in the studio.";
+  }
+  if (actions.length) return "Choose a link below to open that page.";
+  return modelText.trim().slice(0, 600) || "Tell me what you’d like to do on campus today.";
+}
+
 export function parseAssistantMessages(value: unknown): AssistantMessage[] | null {
   if (!Array.isArray(value) || value.length < 1 || value.length > 8) return null;
   const messages: AssistantMessage[] = [];
