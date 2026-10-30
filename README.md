@@ -62,6 +62,8 @@ npm run build
 
 Routes: `/margins` (feed), `/margins/[id]` (meme), `/create` (protected studio), `/templates` (library), `/demo` (practice), `/members/[id]` (creator), `/profile` (protected settings), `/login`, and `/privacy`. `/` redirects to the feed. Safe creation drafts, templates, and today's idea survive sign-in.
 
+The header and creation studio link eligible Superadmins to [Prompt Chain Studio](https://campus-prompt-chains.vercel.app), a separate application using the same Supabase project. Link visibility reads the signed-in user's live `member_profiles.is_superadmin` flag and excludes blocked/deleted profiles; the destination checks its own authorization again. Set `NEXT_PUBLIC_PROMPT_CHAINS_URL` to change the destination (for local development, `http://localhost:3002`). Separate production domains require signing in to the studio with the same Google account.
+
 ## Database rollout
 
 Historical migrations remain an audit trail. Older migrations use eight-digit dates and newer ones use 14-digit timestamps, so do not rely on lexical filename order. After the historical profile schema and October 5 caption/quota/vote migrations, apply:

@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "city-margins-admin", "tmp", "output"]
+  "exclude": ["node_modules", "city-margins-admin", "prompt-chain-studio", "tmp", "output"]
 }

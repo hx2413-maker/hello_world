@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "city-margins-admin/**",
+    "prompt-chain-studio/**",
     "tmp/**",
     "output/**",
   ]),
