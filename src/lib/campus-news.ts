@@ -94,7 +94,7 @@ async function getHolidayResult(timeoutMs: number): Promise<CampusNewsResult> {
     return {
       prompt: {
         label: `Holiday idea: ${holiday.name}`,
-        scene: `${holiday.name} is on ${displayDate}. A Columbia student balances holiday plans with their Butler reading pile. Make the joke about student procrastination; do not imply Columbia cancels classes.`,
+        scene: `${holiday.name} is on ${displayDate}. My group chat is making plans; my Butler reading pile has other ideas.`,
         sourceTitle: "U.S. holiday calendar · Nager.Date (not Columbia’s class schedule)",
         sourceUrl: `https://nagerholidays.com/publicholiday/united-states/${holiday.date.slice(0, 4)}`,
         publishedAt: holidayDate, fetchedAt: diagnostics.fetchedAt, kind: "holiday",
